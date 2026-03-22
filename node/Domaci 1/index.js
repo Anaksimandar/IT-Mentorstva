@@ -13,7 +13,6 @@ const server = http.createServer((req, res) => {
 		res.end();
 	} else {
 		res.statusCode = 404;
-		res.setHeader("Content-Type", "text/plain");
 		res.end("404 Not Found");
 	}
 });
