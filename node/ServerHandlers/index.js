@@ -4,10 +4,9 @@ const {
 	handleAPI,
 	handleHtml,
 } = require("./src/requestHandlers");
+require("./listeners/handlePageEmitter");
 
 const server = http.createServer((req, res) => {
-	console.log(req.url);
-
 	if (req.url.includes("/public")) {
 		handleStaticFiles(req, res);
 	} else if (req.url.startsWith("/api")) {

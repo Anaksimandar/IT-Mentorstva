@@ -1,5 +1,6 @@
 const fs = require("fs");
 const path = require("path");
+const emitter = require("../events/emiter");
 
 const EXTENSION_CONTENT_TYPES = {
 	js: "application/javascript",
@@ -15,7 +16,6 @@ const EXTENSION_CONTENT_TYPES = {
 
 function handleStaticFiles(req, res) {
 	const url = req.url;
-	console.log(url);
 
 	const filePath = path.join(__dirname, "../", url);
 	console.log(filePath);
@@ -23,12 +23,14 @@ function handleStaticFiles(req, res) {
 
 	fs.readFile(filePath, (err, data) => {
 		if (err) {
+			emitter.emit("static:error");
 			res.statusCode = 404;
 			return res.end("File Not Found");
 		}
 		const contentType =
 			EXTENSION_CONTENT_TYPES[ext] || "application/octet-stream";
 		res.setHeader("Content-Type", contentType);
+		emitter.emit("static:success");
 		return res.end(data);
 	});
 }
