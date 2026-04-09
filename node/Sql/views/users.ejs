@@ -1,0 +1,70 @@
+
+    <div class="container">
+        <a href="/" class="back-link">← Back to Home</a>
+
+        <h1>Users Management</h1>
+
+        <% if (users && users.length > 0) { %>
+            <div class="stats">
+                <div>
+                    <div class="number"><%= users.length %></div>
+                    <div class="label">Total Users</div>
+                </div>
+                <div>
+                    <div class="number"><%= users.filter(u => u.status === 'active').length %></div>
+                    <div class="label">Active Users</div>
+                </div>
+                <div>
+                    <div class="number"><%= users.filter(u => u.created_at && new Date(u.created_at) > new Date(Date.now() - 30*24*60*60*1000)).length %></div>
+                    <div class="label">New This Month</div>
+                </div>
+            </div>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>User</th>
+                        <th>Email</th>
+                        <th>Created</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% users.forEach(user => { %>
+                        <tr>
+                            <td>
+                                <div class="user-info">
+                                    <div class="user-avatar">
+                                        <%= (user.name || user.username || 'U').charAt(0).toUpperCase() %>
+                                    </div>
+                                    <div class="user-details">
+                                        <div class="user-name"><%= user.name || user.username || 'Unknown' %></div>
+                                        <div class="user-email">ID: <%= user.id %></div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td><%= user.email || 'N/A' %></td>
+                            <td>
+                                <span>
+                                    <%= user.date_of_birth || 'N/A' %>
+                                </span>
+                            </td>
+                            <td>
+                                <% if (user.created_at) { %>
+                                    <%= new Date(user.created_at).toLocaleDateString() %>
+                                <% } else { %>
+                                    N/A
+                                <% } %>
+                            </td>
+                            
+                        </tr>
+                    <% }); %>
+                </tbody>
+            </table>
+        <% } else { %>
+            <div class="no-users">
+                <h2>No Users Found</h2>
+                <p>There are currently no users in the database.</p>
+                <a href="/users/new" class="btn btn-primary">Add First User</a>
+            </div>
+        <% } %>
+    </div>
