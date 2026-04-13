@@ -1,0 +1,13 @@
+<main>
+	<% if (session) { %>
+	<div class="user-info">
+		<span>Welcome!</span>
+		<a href="/logout">Logout</a>
+	</div>
+	<% } else { %>
+	<div class="auth-links">
+		<a href="/login">Login</a>
+		<a href="/register">Register</a>
+	</div>
+	<% } %>
+</main>

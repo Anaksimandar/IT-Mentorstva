@@ -1,0 +1,15 @@
+<div>
+  <h1>Products</h1>
+  <% if (product) { %>
+    <div class="product-grid">
+        <div class="product-card">
+          <h2><%= product.name %></h2>
+          <p class="price">$<%= (product.price / 100).toFixed(2) %></p>
+          <p class="amount">In stock: <%= product.amount %></p>
+          <p class="slug">Slug: <%= product.slug %></p>
+        </div>
+    </div>
+  <% } else { %>
+    <p>No products available.</p>
+  <% } %>
+</div>
