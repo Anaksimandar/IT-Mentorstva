@@ -36,17 +36,48 @@ const isUserLoggedIn = (req) => {
 	return session !== null;
 };
 
+const logout = (userId) => {
+	for (const sessionId in sessions) {
+		if (sessions[sessionId].userId === userId) {
+			delete sessions[sessionId];
+			saveSessions(sessions);
+			break;
+		}
+	}
+	return;
+};
+
+const addToShoppingChart = (userId, productId) => {
+	const session = Object.values(sessions).find((s) => s.userId === userId);
+	if (!session) {
+		throw new Error("Session doesnt exists");
+	}
+	if (!Array.isArray(session.shoppingCart)) {
+		session.shoppingCart = [];
+	}
+	if (session.shoppingCart.some((item) => item.productId === productId)) {
+		session.shoppingCart = session.shoppingCart.map((item) => {
+			if (item.productId === productId) {
+				return { ...item, quantity: item.quantity + 1 };
+			}
+			return item;
+		});
+		saveSessions(sessions);
+		return;
+	}
+	const cartObject = { productId: productId, quantity: 1 };
+	session.shoppingCart.push(cartObject);
+	saveSessions(sessions);
+	return;
+};
 const getSession = (req) => {
 	const cookie = req.headers.cookie || "";
-	console.log(cookie);
-
 	// sid=abc123; we want to extract abc123
 	const match = cookie.match(/sid=([^;]+)/);
-	console.log(match);
 
-	if (!match) return null;
+	if (!match) return {};
 
-	return sessions[match[1]] || null;
+	return sessions[match[1]] || {};
 };
 
 module.exports = {
@@ -55,4 +86,6 @@ module.exports = {
 	loadSessions,
 	saveSessions,
 	isUserLoggedIn,
+	logout,
+	addToShoppingChart,
 };

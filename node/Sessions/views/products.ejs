@@ -1,27 +1,37 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Products</title>
-  <link rel="stylesheet" href="/public/css/style.css" />
-</head>
-<body>
-  <h1>Products</h1>
+<h1>Products</h1>
+<div class="product-grid"></div>
 
-  <% if (products && products.length > 0) { %>
-    <div class="product-grid">
-      <% products.forEach((product) => { %>
-        <div class="product-card">
-          <h2><%= product.name %></h2>
-          <p class="price">$<%= (product.price / 100).toFixed(2) %></p>
-          <p class="amount">In stock: <%= product.amount %></p>
-          <p class="slug">Slug: <%= product.slug %></p>
-        </div>
-      <% }) %>
-    </div>
-  <% } else { %>
-    <p>No products available.</p>
-  <% } %>
-</body>
-</html>
+<script>
+	const productsContainer = document.getElementsByClassName("product-grid")[0];
+	const showProductButtons =
+		document.getElementsByClassName("show-product-btn");
+	const getAllProducts = async () => {
+		const response = await fetch("/api/products");
+		const data = await response.json();
+		console.log("called", data);
+		return data;
+	};
+
+	const showProducts = (products) => {
+		productsContainer.innerHTML = "";
+		products.forEach((product) => {
+			const productElement = document.createElement("div");
+			productElement.classList.add("product-card");
+			productElement.innerHTML = `
+				<h2>${product.name}</h2>
+				<p class="amount">Amount: ${product.amount}</p>
+				<p class="price">Price: $${product.price}</p>
+				<a href="/product/${product.slug}" type="button" id="showDetailsBtn">Show Details</a>
+			`;
+			productsContainer.appendChild(productElement);
+		});
+	};
+
+	const showProductDetails = (product) => {};
+
+	(async () => {
+		const products = await getAllProducts();
+		console.log("this will be called after getAllProducts");
+		showProducts(products);
+	})();
+</script>

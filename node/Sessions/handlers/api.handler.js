@@ -1,4 +1,5 @@
 const { registerUser, loginUser } = require("../services/user.service");
+const { getItems, getItemsBySlug } = require("../services/item.service");
 const querystring = require("querystring");
 const {
 	validateEmail,
@@ -7,10 +8,22 @@ const {
 	isCheckBoxChecked,
 	validateName,
 } = require("../helper/validator");
-const { createSession } = require("../services/session.service");
+const {
+	createSession,
+	logout,
+	getSession,
+	addToShoppingChart,
+} = require("../services/session.service");
 
 const apiHandler = async (req, res) => {
-	if (req.url === "/api/register" && req.method === "POST") {
+	const urlMatch = req.url.match(/^\/api\/(.+)$/);
+	console.log(urlMatch);
+
+	if (!urlMatch) {
+		res.statusCode = 404;
+		return res.end("API Endpoint Not Found\n");
+	}
+	if (urlMatch[1] === "register" && req.method === "POST") {
 		// Handle registration API endpoint
 		let data = "";
 		req.on("data", (chunk) => {
@@ -19,7 +32,9 @@ const apiHandler = async (req, res) => {
 
 		req.on("end", async () => {
 			const { name, email, password, confirmPassword, terms } =
-				querystring.parse(data);
+				JSON.parse(data);
+			console.log(data);
+
 			if (!validateName(name)) {
 				res.statusCode = 400;
 				res.setHeader("Content-Type", "application/json");
@@ -61,10 +76,10 @@ const apiHandler = async (req, res) => {
 			try {
 				const userId = await registerUser(name, email, password);
 				const sessionId = createSession(userId);
-				res.statusCode = 200;
+				res.statusCode = 303;
 				res.setHeader("Set-Cookie", `sid=${sessionId}; Path=/; HttpOnly`);
-				res.setHeader("Content-Type", "application/json");
-				return res.end(JSON.stringify({ message: "Registration successful" }));
+				res.setHeader("Location", "/");
+				return res.end();
 			} catch (error) {
 				console.error("Error occurred while registering user:", error);
 				res.statusCode = 500;
@@ -72,14 +87,17 @@ const apiHandler = async (req, res) => {
 				return res.end(JSON.stringify({ message: error.message }));
 			}
 		});
-	} else if (req.url === "/api/login" && req.method === "POST") {
+	} else if (urlMatch[1] === "login" && req.method === "POST") {
 		// Handle login API endpoint
+
 		let data = "";
 		req.on("data", (chunk) => {
 			data += chunk;
 		});
 		req.on("end", async () => {
-			const { email, password } = querystring.parse(data);
+			const { email, password } = JSON.parse(data);
+			console.log(data);
+
 			if (!validateEmail(email)) {
 				res.statusCode = 400;
 				res.setHeader("Content-Type", "application/json");
@@ -98,10 +116,11 @@ const apiHandler = async (req, res) => {
 				const user = await loginUser(email, password);
 				if (user) {
 					const sessionId = createSession(user.id);
-					res.statusCode = 200;
+					res.statusCode = 303;
 					res.setHeader("Set-Cookie", `sid=${sessionId}; Path=/; HttpOnly`);
-					res.setHeader("Content-Type", "application/json");
-					return res.end(JSON.stringify({ message: "Login successful" }));
+					res.statusCode = 303;
+					res.setHeader("Location", "/");
+					return res.end();
 				} else {
 					res.statusCode = 401;
 					res.setHeader("Content-Type", "application/json");
@@ -116,6 +135,58 @@ const apiHandler = async (req, res) => {
 				return res.end(JSON.stringify({ message: "Internal Server Error" }));
 			}
 		});
+	} else if (urlMatch[1] === "logout") {
+		const session = getSession(req);
+		if (session) {
+			logout(session.userId);
+			res.setHeader("Set-Cookie", `sid=; Path=/; HttpOnly; Max-Age=0`);
+			res.statusCode = 303;
+			res.setHeader("Location", "/");
+			return res.end();
+		}
+		res.statusCode = 401;
+		res.setHeader("Content-Type", "application/json");
+		return res.end(JSON.stringify({ message: "Not logged in" }));
+	} else if (urlMatch[1] === "cart/add" && req.method === "POST") {
+		let data = "";
+		req.on("data", (chunk) => {
+			data += chunk.toString();
+		});
+		req.on("end", () => {
+			const formatData = JSON.parse(data);
+			if (!formatData.productId) {
+				res.statusCode = 400;
+				res.setHeader("Content-Type", "application/json");
+				return res.end(JSON.stringify({ message: "product doesnt exists" }));
+			}
+			const session = getSession(req);
+			try {
+				addToShoppingChart(session.userId, formatData.productId);
+				res.statusCode = 303;
+				res.setHeader("Location", "/products");
+				return res.end();
+			} catch (err) {
+				res.statusCode = 400;
+				res.setHeader("Content-Type", "application/json");
+				return res.end(
+					JSON.stringify({ message: `error occured${err.message}` }),
+				);
+			}
+		});
+	} else if (urlMatch[1] === "products" && req.method === "GET") {
+		try {
+			const products = await getItems();
+
+			res.statusCode = 200;
+			res.setHeader("Content-Type", "application/json");
+			res.end(JSON.stringify(products));
+		} catch (e) {
+			res.statusCode = 500;
+			res.setHeader("Content-Type", "application/json");
+			res.end(
+				JSON.stringify({ message: `Couldnt return products ${e.message}` }),
+			);
+		}
 	} else {
 		res.statusCode = 404;
 		res.setHeader("Content-Type", "text/plain");
