@@ -1,32 +1,24 @@
 {
-  "92a6614e-8d45-4464-a8e5-c9374583aa0c": {
-    "userId": 19,
-    "createdAt": 1776103687368
-  },
-  "430c79d6-a93b-4a95-a083-e15bfc40b7a6": {
-    "userId": 15,
-    "createdAt": 1776193917286,
-    "shoppingCart": [
-      {
-        "productId": "1",
-        "quantity": 2
-      }
-    ]
-  },
-  "be91daad-804f-4aa2-a760-8aadc67f8b85": {
-    "userId": 15,
-    "createdAt": 1776193928157
-  },
-  "730cd625-6a74-49ee-84d2-3b537042f0a4": {
-    "userId": 20,
-    "createdAt": 1776194756484
-  },
-  "e7d20ac6-6fc0-4f60-99d7-e1f23daa9c5b": {
-    "userId": 15,
-    "createdAt": 1776290271152
-  },
-  "49ea116b-37ad-498d-ba53-7f23b169966a": {
-    "userId": 15,
-    "createdAt": 1776591664048
-  }
+	"0d0197bf-dfc2-426c-a3b0-65f4647ccdb8": {
+		"userId": 15,
+		"createdAt": 1776628187868,
+		"shoppingCart": [
+			{
+				"productId": "1",
+				"quantity": 6
+			},
+			{
+				"productId": "4",
+				"quantity": 2
+			},
+			{
+				"productId": "5",
+				"quantity": 2
+			},
+			{
+				"productId": "15",
+				"quantity": 11
+			}
+		]
+	}
 }

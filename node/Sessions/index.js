@@ -64,6 +64,8 @@ const server = http.createServer(async (req, res) => {
 		pageHandler(req, res, "login");
 	} else if (req.url.startsWith("/api/")) {
 		apiHandler(req, res);
+	} else if (req.url === "/cart") {
+		pageHandler(req, res, "cart");
 	} else {
 		res.statusCode = 404;
 		res.setHeader("Content-Type", "text/plain");

@@ -1,3 +1,70 @@
 <div class="cart-section">
 	<h1>Cart</h1>
+	<div id="cart-items-container" class="cart-items"></div>
+	<button id="checkout-btn">Checkout</button>
 </div>
+
+<script>
+	const loadCartItems = async () => {
+		try {
+			const response = await fetch("/api/cart");
+			if (!response.ok) {
+				throw new Error("Network response was not ok");
+			}
+			const cartItems = await response.json();
+			console.log(cartItems);
+
+			return cartItems;
+		} catch (error) {
+			console.error("Error fetching cart items:", error);
+			return [];
+		}
+	};
+
+	const displayCartItems = (cartItems) => {
+		const container = document.getElementById("cart-items-container");
+		if (!cartItems || cartItems.length === 0) {
+			container.innerHTML = "<p>Your cart is empty.</p>";
+			return;
+		}
+		container.innerHTML = "";
+		cartItems.forEach((item) => {
+			const itemElement = document.createElement("div");
+			itemElement.classList.add("cart-item");
+			itemElement.innerHTML = `
+				<h2>${item.name}</h2>
+				<div class="item-details">
+					<p class="price">Price: $${item.unitPrice}</p>
+					<p class="amount">Quantity: ${item.quantity}</p>
+				</div>
+			`;
+			container.appendChild(itemElement);
+		});
+	};
+	document.addEventListener("DOMContentLoaded", async () => {
+		const btnCheckout = document.getElementById("checkout-btn");
+		btnCheckout.addEventListener("click", async () => {
+			try {
+				const response = await fetch("api/checkout", {
+					method: "POST",
+					headers: {
+						"Content-Type": "application/json",
+					},
+					body: JSON.stringify({ message: "checkout" }),
+				});
+				if (!response.ok) {
+					console.log("Error occured");
+					return;
+				}
+				const data = await response.json();
+				return data;
+			} catch (err) {
+				console.log(err.message);
+			}
+		});
+		const cartItems = await loadCartItems();
+		console.log(cartItems);
+
+		displayCartItems(cartItems);
+	});
+</script>
