@@ -1,4 +1,8 @@
-const { registerUser, loginUser } = require("../services/user.service");
+const {
+	registerUser,
+	loginUser,
+	userExistsById,
+} = require("../services/user.service");
 const {
 	getItems,
 	getItemsBySlug,
@@ -19,6 +23,7 @@ const {
 	getSession,
 	addToShoppingCart,
 } = require("../services/session.service");
+const { checkout } = require("../services/order.service");
 
 const apiHandler = async (req, res) => {
 	const urlMatch = req.url.match(/^\/api\/(.+)$/);
@@ -225,8 +230,6 @@ const apiHandler = async (req, res) => {
 			);
 		}
 	} else if (urlMatch[1] === "cart" && req.method === "GET") {
-		console.log("radii");
-
 		const session = getSession(req);
 
 		if (!session) {
@@ -235,8 +238,6 @@ const apiHandler = async (req, res) => {
 			return res.end(JSON.stringify({ message: "Not logged in" }));
 		}
 		try {
-			console.log(session.shoppingCart);
-
 			const cartItems = await getUserCartItems(session.shoppingCart);
 
 			res.statusCode = 200;
@@ -249,9 +250,52 @@ const apiHandler = async (req, res) => {
 			return res.end(JSON.stringify({ message: "Internal Server Error" }));
 		}
 	} else if (urlMatch[1] === "checkout" && req.method === "POST") {
-		res.setHeader("Content-Type", "application/json");
-		res.statusCode = 200;
-		res.end(JSON.stringify({ message: "checkout" }));
+		const session = getSession(req);
+		if (!session) {
+			res.statusCode = 401;
+			res.setHeader("Content-Type", "application/json");
+			return res.end(JSON.stringify({ message: "Not logged in" }));
+		}
+		const userId = session.userId;
+		const items = await getUserCartItems(session.shoppingCart);
+		console.log(items);
+
+		let data = "";
+		req.on("data", (chunk) => {
+			data += chunk.toString();
+		});
+		req.on("end", async () => {
+			const order = JSON.parse(data);
+			try {
+				const userExists = userExistsById(userId);
+				if (!userExists) {
+					res.statusCode = 401;
+					res.setHeader("Content-Type", "application/json");
+					return res.end(JSON.stringify({ message: "User doesnt exists" }));
+				}
+			} catch (error) {
+				res.statusCode = 500;
+				res.setHeader("Content-Type", "application/json");
+				return res.end(JSON.stringify({ message: "Internal Server Error" }));
+			}
+
+			try {
+				const checkoutResult = await checkout(userId, order, items);
+				res.setHeader("Content-Type", "application/json");
+				res.statusCode = 200;
+				return res.end(
+					JSON.stringify({
+						message: "Checkout successful",
+						result: checkoutResult,
+					}),
+				);
+			} catch (error) {
+				console.error("Error occurred during checkout:", error);
+				res.statusCode = 500;
+				res.setHeader("Content-Type", "application/json");
+				return res.end(JSON.stringify({ message: "Internal Server Error" }));
+			}
+		});
 	} else {
 		res.statusCode = 404;
 		res.setHeader("Content-Type", "text/plain");

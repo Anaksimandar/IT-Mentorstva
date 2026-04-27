@@ -66,10 +66,12 @@ const server = http.createServer(async (req, res) => {
 		apiHandler(req, res);
 	} else if (req.url === "/cart") {
 		pageHandler(req, res, "cart");
+	} else if (req.url === "/checkout") {
+		pageHandler(req, res, "checkout");
 	} else {
 		res.statusCode = 404;
 		res.setHeader("Content-Type", "text/plain");
-		return res.end("Not Found\n");
+		return res.end("Page Not Found\n");
 	}
 });
 

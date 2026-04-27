@@ -34,6 +34,13 @@ const getUserByEmail = async (email) => {
 	return rows[0];
 };
 
+const userExistsById = async (userId) => {
+	const [rows] = await pool.query("SELECT id FROM users WHERE id = ?", [
+		userId,
+	]);
+	return rows.length > 0;
+};
+
 const loginUser = async (email, password) => {
 	const user = await getUserByEmail(email);
 
@@ -43,4 +50,4 @@ const loginUser = async (email, password) => {
 	return undefined;
 };
 
-module.exports = { getUsers, registerUser, loginUser };
+module.exports = { getUsers, registerUser, loginUser, userExistsById };

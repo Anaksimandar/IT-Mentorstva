@@ -1,7 +1,7 @@
 <div class="cart-section">
 	<h1>Cart</h1>
 	<div id="cart-items-container" class="cart-items"></div>
-	<button id="checkout-btn">Checkout</button>
+	<a id="checkout-btn" href="/checkout">Checkout</a>
 </div>
 
 <script>
@@ -42,26 +42,6 @@
 		});
 	};
 	document.addEventListener("DOMContentLoaded", async () => {
-		const btnCheckout = document.getElementById("checkout-btn");
-		btnCheckout.addEventListener("click", async () => {
-			try {
-				const response = await fetch("api/checkout", {
-					method: "POST",
-					headers: {
-						"Content-Type": "application/json",
-					},
-					body: JSON.stringify({ message: "checkout" }),
-				});
-				if (!response.ok) {
-					console.log("Error occured");
-					return;
-				}
-				const data = await response.json();
-				return data;
-			} catch (err) {
-				console.log(err.message);
-			}
-		});
 		const cartItems = await loadCartItems();
 		console.log(cartItems);
 

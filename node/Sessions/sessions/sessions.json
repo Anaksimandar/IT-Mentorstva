@@ -4,20 +4,8 @@
 		"createdAt": 1776628187868,
 		"shoppingCart": [
 			{
-				"productId": "1",
-				"quantity": 6
-			},
-			{
 				"productId": "4",
 				"quantity": 2
-			},
-			{
-				"productId": "5",
-				"quantity": 2
-			},
-			{
-				"productId": "15",
-				"quantity": 11
 			}
 		]
 	}
