@@ -23,7 +23,7 @@ const {
 	getSession,
 	addToShoppingCart,
 } = require("../services/session.service");
-const { checkout } = require("../services/order.service");
+const { checkout, getOrders } = require("../services/order.service");
 
 const apiHandler = async (req, res) => {
 	const urlMatch = req.url.match(/^\/api\/(.+)$/);
@@ -296,6 +296,24 @@ const apiHandler = async (req, res) => {
 				return res.end(JSON.stringify({ message: "Internal Server Error" }));
 			}
 		});
+	} else if (urlMatch[1] === "orders" && req.method === "GET") {
+		const session = getSession(req);
+		if (!session) {
+			res.statusCode = 401;
+			res.setHeader("Content-Type", "application/json");
+			return res.end(JSON.stringify({ message: "Not logged in" }));
+		}
+		try {
+			const orders = await getOrders(session.userId);
+			res.statusCode = 200;
+			res.setHeader("Content-Type", "application/json");
+			return res.end(JSON.stringify(orders));
+		} catch (error) {
+			console.error("Error occurred while fetching orders:", error);
+			res.statusCode = 500;
+			res.setHeader("Content-Type", "application/json");
+			return res.end(JSON.stringify({ message: "Internal Server Error" }));
+		}
 	} else {
 		res.statusCode = 404;
 		res.setHeader("Content-Type", "text/plain");

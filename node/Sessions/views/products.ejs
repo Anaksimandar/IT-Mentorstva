@@ -19,7 +19,7 @@
 			productElement.classList.add("product-card");
 			productElement.innerHTML = `
 				<h2>${product.name}</h2>
-				<p class="amount">Amount: ${product.amount}</p>
+				<p class="stock">Stock: ${product.stock}</p>
 				<p class="price">Price: $${product.price}</p>
 				<a href="/product/${product.slug}" type="button" id="showDetailsBtn">Show Details</a>
 			`;

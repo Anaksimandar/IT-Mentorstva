@@ -68,6 +68,10 @@ const server = http.createServer(async (req, res) => {
 		pageHandler(req, res, "cart");
 	} else if (req.url === "/checkout") {
 		pageHandler(req, res, "checkout");
+	} else if (req.url === "/about") {
+		pageHandler(req, res, "about");
+	} else if (req.url === "/orders") {
+		pageHandler(req, res, "orders");
 	} else {
 		res.statusCode = 404;
 		res.setHeader("Content-Type", "text/plain");

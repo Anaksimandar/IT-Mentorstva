@@ -47,6 +47,35 @@ const checkout = async (userId, order, items) => {
 	}
 };
 
+const getOrders = async (userId) => {
+	try {
+		const [orders] = await pool.query(
+			`SELECT 
+				orders.id AS order_id,
+				orders.full_name,
+				orders.email,
+				orders.address,
+				orders.city,
+				orders.zip,
+				order_items.id AS order_item_id,
+				order_items.quantity,
+				order_items.price AS item_price,
+				items.name AS item_name
+			FROM orders
+			JOIN order_items ON orders.id = order_items.order_id
+			JOIN items ON order_items.item_id = items.id
+			WHERE user_id = ?`,
+			[userId],
+		);
+		console.log(orders);
+
+		return orders;
+	} catch (error) {
+		throw error;
+	}
+};
+
 module.exports = {
 	checkout,
+	getOrders,
 };

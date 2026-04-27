@@ -1,12 +1,20 @@
 {
-	"0d0197bf-dfc2-426c-a3b0-65f4647ccdb8": {
-		"userId": 15,
-		"createdAt": 1776628187868,
-		"shoppingCart": [
-			{
-				"productId": "4",
-				"quantity": 2
-			}
-		]
-	}
+  "0d0197bf-dfc2-426c-a3b0-65f4647ccdb8": {
+    "userId": 15,
+    "createdAt": 1776628187868,
+    "shoppingCart": [
+      {
+        "productId": "4",
+        "quantity": 2
+      },
+      {
+        "productId": "2",
+        "quantity": 2
+      },
+      {
+        "productId": "1",
+        "quantity": 2
+      }
+    ]
+  }
 }
