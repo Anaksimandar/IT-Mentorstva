@@ -1,4 +1,5 @@
 const pool = require("./my-sql");
+const { InsufficientStockError } = require("./errors");
 
 const checkout = async (userId, order, items) => {
 	// validate order data
@@ -26,7 +27,6 @@ const checkout = async (userId, order, items) => {
                  VALUES (?, ?, ?, ?)`,
 				[orderId, item.id, item.quantity, item.unitPrice],
 			);
-			console.log(item);
 			const [result] = await connection.query(
 				`UPDATE items
                  SET stock = stock - ?
@@ -35,7 +35,7 @@ const checkout = async (userId, order, items) => {
 			);
 
 			if (result.affectedRows === 0) {
-				throw new Error("Not enough stock");
+				throw new InsufficientStockError();
 			}
 		}
 		await connection.commit();
@@ -67,7 +67,6 @@ const getOrders = async (userId) => {
 			WHERE user_id = ?`,
 			[userId],
 		);
-		console.log(orders);
 
 		return orders;
 	} catch (error) {

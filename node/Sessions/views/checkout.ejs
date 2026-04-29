@@ -7,153 +7,166 @@
 </div>
 
 <script>
-	async function loadCart() {
+	const generateHtmlForCart = (cart) => {
+		if (!cart || cart.length === 0) {
+			document.getElementById("checkout-content").innerHTML = `
+	                   <div class="empty-cart">
+	                       <p>Your cart is empty.</p>
+	                       <a href="/products" class="btn">Continue Shopping</a>
+	                   </div>
+	               `;
+			return;
+		}
+
+		let total = 0;
+		let cartHtml = `
+	               <div class="checkout-row">
+	                   <div class="cart-summary">
+	                       <h2>Order Summary</h2>
+	                       <table class="cart-table">
+	                           <thead>
+	                               <tr>
+	                                   <th>Product</th>
+	                                   <th>Price</th>
+	                                   <th>Quantity</th>
+	                                   <th>Subtotal</th>
+	                               </tr>
+	                           </thead>
+	                           <tbody>
+	           `;
+
+		cart.forEach((item) => {
+			const subtotal = item.unitPrice * item.quantity;
+			total += subtotal;
+			cartHtml += `
+	                   <tr>
+	                       <td>${item.name}</td>
+	                       <td>$${item.unitPrice.toFixed(2)}</td>
+	                       <td>${item.quantity}</td>
+	                       <td>$${subtotal.toFixed(2)}</td>
+	                   </tr>
+	               `;
+		});
+
+		cartHtml += `
+	                           </tbody>
+	                           <tfoot>
+	                               <tr>
+	                                   <td colspan="3" class="total-label">Total:</td>
+	                                   <td class="total-value">$${total.toFixed(2)}</td>
+	                               </tr>
+	                           </tfoot>
+	                       </table>
+	                   </div>
+	                   <div class="checkout-form">
+	                       <h2>Shipping Information</h2>
+	                       <form id="checkout-form">
+	                           <div class="form-group">
+	                               <label for="name">Full name</label>
+	                               <input type="text" id="name" name="name" required>
+	                           </div>
+	                           <div class="form-group">
+	                               <label for="email">Email</label>
+	                               <input type="email" id="email" name="email" required>
+	                           </div>
+	                           <div class="form-group">
+	                               <label for="address">Shipping Address</label>
+	                               <input type="text" id="address" name="address" required>
+	                           </div>
+	                           <div class="form-group">
+	                               <label for="city">City</label>
+	                               <input type="text" id="city" name="city" required>
+	                           </div>
+	                           <div class="form-group">
+	                               <label for="zip">ZIP Code</label>
+	                               <input type="text" id="zip" name="zip" required>
+	                           </div>
+
+	                           <div class="form-actions">
+	                               <a href="/cart" class="btn btn-secondary">Back to Cart</a>
+	                               <button type="submit" class="btn">Place Order</button>
+	                           </div>
+	                       </form>
+	                   </div>
+	               </div>
+	           `;
+
+		document.getElementById("checkout-content").innerHTML = cartHtml;
+	};
+	const loadCart = async () => {
 		try {
 			const response = await fetch("/api/cart");
 
 			if (!response.ok) {
 				if (response.status === 401) {
 					document.getElementById("checkout-content").innerHTML = `
-                        <div class="empty-cart">
-                            <p>Please log in to view your cart.</p>
-                            <a href="/login" class="btn">Login</a>
-                        </div>
-                    `;
+	                       <div class="empty-cart">
+	                           <p>Please log in to view your cart.</p>
+	                           <a href="/login" class="btn">Login</a>
+	                       </div>
+	                   `;
 					return;
 				}
 				throw new Error("Failed to fetch cart");
 			}
 
-			const cart = await response.json();
-			console.log(cart);
-
-			if (!cart || cart.length === 0) {
-				document.getElementById("checkout-content").innerHTML = `
-                    <div class="empty-cart">
-                        <p>Your cart is empty.</p>
-                        <a href="/products" class="btn">Continue Shopping</a>
-                    </div>
-                `;
-				return;
-			}
-
-			let total = 0;
-			let cartHtml = `
-                <div class="checkout-row">
-                    <div class="cart-summary">
-                        <h2>Order Summary</h2>
-                        <table class="cart-table">
-                            <thead>
-                                <tr>
-                                    <th>Product</th>
-                                    <th>Price</th>
-                                    <th>Quantity</th>
-                                    <th>Subtotal</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-            `;
-
-			cart.forEach((item) => {
-				const subtotal = item.unitPrice * item.quantity;
-				total += subtotal;
-				cartHtml += `
-                    <tr>
-                        <td>${item.name}</td>
-                        <td>$${item.unitPrice.toFixed(2)}</td>
-                        <td>${item.quantity}</td>
-                        <td>$${subtotal.toFixed(2)}</td>
-                    </tr>
-                `;
-			});
-
-			cartHtml += `
-                            </tbody>
-                            <tfoot>
-                                <tr>
-                                    <td colspan="3" class="total-label">Total:</td>
-                                    <td class="total-value">$${total.toFixed(2)}</td>
-                                </tr>
-                            </tfoot>
-                        </table>
-                    </div>
-                    <div class="checkout-form">
-                        <h2>Shipping Information</h2>
-                        <form id="checkout-form">
-                            <div class="form-group">
-                                <label for="name">Full name</label>
-                                <input type="text" id="name" name="name" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="email">Email</label>
-                                <input type="email" id="email" name="email" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="address">Shipping Address</label>
-                                <input type="text" id="address" name="address" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="city">City</label>
-                                <input type="text" id="city" name="city" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="zip">ZIP Code</label>
-                                <input type="text" id="zip" name="zip" required>
-                            </div>
-                            
-                            <div class="form-actions">
-                                <a href="/cart" class="btn btn-secondary">Back to Cart</a>
-                                <button type="submit" class="btn">Place Order</button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            `;
-
-			document.getElementById("checkout-content").innerHTML = cartHtml;
-
-			// Handle form submission
-			document
-				.getElementById("checkout-form")
-				.addEventListener("submit", async (e) => {
-					e.preventDefault();
-
-					const formData = {
-						fullName: document.getElementById("name").value,
-						email: document.getElementById("email").value,
-						address: document.getElementById("address").value,
-						city: document.getElementById("city").value,
-						zip: document.getElementById("zip").value,
-					};
-
-					try {
-						const response = await fetch("/api/checkout", {
-							method: "POST",
-							headers: { "Content-Type": "application/json" },
-							body: JSON.stringify(formData),
-						});
-
-						if (response.ok) {
-							alert("Order placed successfully!");
-							window.location.href = "/";
-						} else {
-							alert("Failed to place order", response.statusText);
-						}
-					} catch (error) {
-						console.error("Error:", error);
-						alert("Error placing order");
-					}
-				});
+			return await response.json();
 		} catch (error) {
 			console.error("Error loading cart:", error);
 			document.getElementById("checkout-content").innerHTML = `
-                <div class="empty-cart">
-                    <p>Error loading cart. Please try again.</p>
-                    <a href="/products" class="btn">Continue Shopping</a>
-                </div>
-            `;
+	               <div class="empty-cart">
+	                   <p>Error loading cart. Please try again.</p>
+	                   <a href="/products" class="btn">Continue Shopping</a>
+	               </div>
+	           `;
 		}
-	}
+	};
+	const checkout = () => {
+		// Handle form submission
+		document
+			.getElementById("checkout-form")
+			.addEventListener("submit", async (e) => {
+				e.preventDefault();
 
-	loadCart();
+				const formData = {
+					fullName: document.getElementById("name").value,
+					email: document.getElementById("email").value,
+					address: document.getElementById("address").value,
+					city: document.getElementById("city").value,
+					zip: document.getElementById("zip").value,
+				};
+
+				try {
+					const response = await fetch("/api/checkout", {
+						method: "POST",
+						headers: { "Content-Type": "application/json" },
+						body: JSON.stringify(formData),
+					});
+
+					if (response.ok) {
+						toast.success(
+							"Order Placed",
+							"Your order has been placed successfully!",
+						);
+						// Delay redirect so user can see the toast
+						setTimeout(() => {
+							window.location.href = "/";
+						}, 2000);
+					} else {
+						const errorData = await response.json();
+						toast.error(
+							"Order Failed",
+							errorData.message || "Failed to place order",
+						);
+					}
+				} catch (error) {
+					toast.error("Order Error", "Error placing order: " + error.message);
+				}
+			});
+	};
+	(async () => {
+		const cart = await loadCart();
+		generateHtmlForCart(cart);
+		checkout();
+	})();
 </script>

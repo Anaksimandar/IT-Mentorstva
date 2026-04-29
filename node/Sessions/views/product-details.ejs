@@ -5,7 +5,7 @@
         <div class="product-card">
           <h2><%= product.name %></h2>
           <p class="price">$<%= (product.price / 100).toFixed(2) %></p>
-          <p class="amount">In stock: <%= product.amount %></p>
+          <p class="amount">In stock: <%= product.stock > 0 ? "In Stock" : "Out of Stock" %></p>
           <p class="slug">Slug: <%= product.slug %></p>
           <button data-product-id="<%- product.id %>" id="add-product-btn">Add product</button>
         </div>
@@ -29,10 +29,10 @@
       });
 
       if(res.ok){
-        alert("Product added to cart");
+        toast.success('Cart Updated', 'Product added to cart');
       } else {
         const errorData = await res.json();
-        alert(`Error adding product to cart: ${errorData.message}`);
+        toast.error('Cart Error', `Error adding product to cart: ${errorData.message}`);
       }
   }
 

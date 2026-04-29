@@ -24,6 +24,7 @@ const {
 	addToShoppingCart,
 } = require("../services/session.service");
 const { checkout, getOrders } = require("../services/order.service");
+const { InsufficientStockError } = require("../services/errors");
 
 const apiHandler = async (req, res) => {
 	const urlMatch = req.url.match(/^\/api\/(.+)$/);
@@ -291,6 +292,18 @@ const apiHandler = async (req, res) => {
 				);
 			} catch (error) {
 				console.error("Error occurred during checkout:", error);
+
+				// Handle specific error types
+				if (error instanceof InsufficientStockError) {
+					res.statusCode = 400;
+					res.setHeader("Content-Type", "application/json");
+					return res.end(
+						JSON.stringify({
+							message: "Not enough stock for one or more items",
+						}),
+					);
+				}
+
 				res.statusCode = 500;
 				res.setHeader("Content-Type", "application/json");
 				return res.end(JSON.stringify({ message: "Internal Server Error" }));
@@ -308,6 +321,7 @@ const apiHandler = async (req, res) => {
 			res.statusCode = 200;
 			res.setHeader("Content-Type", "application/json");
 			return res.end(JSON.stringify(orders));
+			// response function -> (success | error | created | rediredect, data = {})
 		} catch (error) {
 			console.error("Error occurred while fetching orders:", error);
 			res.statusCode = 500;

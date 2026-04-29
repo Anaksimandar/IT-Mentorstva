@@ -48,7 +48,7 @@
 
 			if (!response.ok) {
 				console.error(result.message);
-				alert(result.message);
+				toast.error("Login Failed", result.message);
 				return;
 			}
 

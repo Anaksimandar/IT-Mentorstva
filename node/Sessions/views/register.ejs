@@ -69,7 +69,7 @@
 
 			if (!response.ok) {
 				console.error(result.message);
-				alert(result.message);
+				toast.error("Registration Failed", result.message);
 				return;
 			}
 

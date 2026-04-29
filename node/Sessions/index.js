@@ -7,8 +7,6 @@ const { pageHandler } = require("./handlers/page.handler");
 const apiHandler = require("./handlers/api.handler");
 
 const server = http.createServer(async (req, res) => {
-	console.log(req.url);
-
 	if (req.url === "/") {
 		res.statusCode = 200;
 		res.setHeader("Content-Type", "text/plain");
@@ -30,7 +28,6 @@ const server = http.createServer(async (req, res) => {
 				svg: "image/svg+xml",
 			}[extension] || "application/octet-stream";
 		const filePath = path.join(__dirname, req.url);
-		console.log(filePath);
 
 		fs.readFile(filePath, (err, content) => {
 			if (err) {
@@ -45,19 +42,15 @@ const server = http.createServer(async (req, res) => {
 		});
 	} else if (req.url.match(/^\/product\/([\w-]+)$/)) {
 		const productSlug = req.url.split("/").pop();
-		console.log("called");
 
 		const product = await getItemsBySlug(productSlug);
 		pageHandler(req, res, "product-details", { product: product });
-		console.log(product);
 		if (product) {
 		} else {
 			res.statusCode = 404;
 			res.setHeader("Content-Type", "text/plain");
 			return res.end("Product Not Found\n");
 		}
-	} else if (req.url === "/products") {
-		pageHandler(req, res, "products");
 	} else if (req.url === "/register") {
 		pageHandler(req, res, "register");
 	} else if (req.url === "/login") {
@@ -70,6 +63,8 @@ const server = http.createServer(async (req, res) => {
 		pageHandler(req, res, "checkout");
 	} else if (req.url === "/about") {
 		pageHandler(req, res, "about");
+	} else if (req.url === "/contact") {
+		pageHandler(req, res, "contact");
 	} else if (req.url === "/orders") {
 		pageHandler(req, res, "orders");
 	} else {
