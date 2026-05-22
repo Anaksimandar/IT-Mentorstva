@@ -1,0 +1,60 @@
+<div class="form-container">
+	<h1>Login</h1>
+	<form id="form" method="post">
+		<div class="form-group">
+			<label for="email">Email:</label>
+			<input type="email" id="email" name="email" required />
+		</div>
+		<div class="form-group">
+			<label for="password">Password:</label>
+			<input type="password" id="password" name="password" required />
+		</div>
+		<button type="submit">Login</button>
+	</form>
+	<span>
+		If you don't have an account, <a href="/register">register here</a>.
+	</span>
+</div>
+
+<script>
+	const form = document.getElementById("form");
+
+	form.addEventListener("submit", async (e) => {
+		const formData = new FormData(form);
+		e.preventDefault();
+		await login({
+			email: formData.get("email"),
+			password: formData.get("password"),
+		});
+	});
+
+	const login = async (data = {}) => {
+		try {
+			const response = await fetch("/api/login", {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify(data),
+			});
+
+			// ✅ handle redirect (your backend sends 303)
+			if (response.redirected) {
+				window.location.href = response.url;
+				return;
+			}
+
+			const result = await response.json();
+
+			if (!response.ok) {
+				console.error(result.message);
+				toast.error("Login Failed", result.message);
+				return;
+			}
+
+			console.log("Login success", result);
+		} catch (err) {
+			console.error("Error:", err);
+		}
+	};
+</script>
