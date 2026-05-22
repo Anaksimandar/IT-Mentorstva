@@ -1,6 +1,6 @@
 <div class="form-container">
 	<h1>Register</h1>
-	<form action="/api/register" method="POST">
+	<form id="form" method="POST">
 		<div class="form-group">
 			<label for="name">Name:</label>
 			<input type="text" id="name" name="name" required />
@@ -31,3 +31,51 @@
 		<button type="submit">Register</button>
 	</form>
 </div>
+
+<script>
+	const form = document.getElementById("form");
+
+	form.addEventListener("submit", async (e) => {
+		const formData = new FormData(form);
+		console.log(formData.get("name"));
+
+		e.preventDefault();
+		await register({
+			name: formData.get("name"),
+			email: formData.get("email"),
+			password: formData.get("password"),
+			confirmPassword: formData.get("confirmPassword"),
+			terms: formData.get("terms"),
+		});
+	});
+
+	const register = async (data = {}) => {
+		try {
+			const response = await fetch("/api/register", {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify(data),
+			});
+
+			// ✅ handle redirect (your backend sends 303)
+			if (response.redirected) {
+				window.location.href = response.url;
+				return;
+			}
+
+			const result = await response.json();
+
+			if (!response.ok) {
+				console.error(result.message);
+				toast.error("Registration Failed", result.message);
+				return;
+			}
+
+			console.log("Registration successfull", result);
+		} catch (err) {
+			console.error("Error:", err);
+		}
+	};
+</script>

@@ -5,11 +5,36 @@
         <div class="product-card">
           <h2><%= product.name %></h2>
           <p class="price">$<%= (product.price / 100).toFixed(2) %></p>
-          <p class="amount">In stock: <%= product.amount %></p>
+          <p class="amount">In stock: <%= product.stock > 0 ? "In Stock" : "Out of Stock" %></p>
           <p class="slug">Slug: <%= product.slug %></p>
+          <button data-product-id="<%- product.id %>" id="add-product-btn">Add product</button>
         </div>
     </div>
   <% } else { %>
     <p>No products available.</p>
   <% } %>
 </div>
+
+<script>
+    const addProductBtn = document.getElementById("add-product-btn");
+    const addProduct = async () => {
+      const productId = addProductBtn.dataset.productId;
+      const res = await fetch(`/api/cart/add`, 
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ productId: productId })
+      });
+
+      if(res.ok){
+        toast.success('Cart Updated', 'Product added to cart');
+      } else {
+        const errorData = await res.json();
+        toast.error('Cart Error', `Error adding product to cart: ${errorData.message}`);
+      }
+  }
+
+  addProductBtn.addEventListener("click", addProduct);
+</script>

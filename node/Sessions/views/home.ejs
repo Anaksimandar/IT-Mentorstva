@@ -1,13 +1,53 @@
-<main>
-	<% if (session) { %>
-	<div class="user-info">
-		<span>Welcome!</span>
-		<a href="/logout">Logout</a>
-	</div>
-	<% } else { %>
-	<div class="auth-links">
-		<a href="/login">Login</a>
-		<a href="/register">Register</a>
-	</div>
-	<% } %>
+<main class="main-section">
+  <div class="search-container mt-1 mb-4">
+    <input type="text" id="search-input" placeholder="Search products..." />
+  </div>
+  <div class="product-grid"></div>
 </main>
+
+<script>
+  const productsContainer = document.getElementsByClassName("product-grid")[0];
+  const showProductButtons = document.getElementsByClassName("show-product-btn");
+  const searchInput = document.getElementById("search-input");
+  let products = [];
+
+  searchInput.addEventListener("keyup", () => {
+    searchItemsByName(products);
+  });
+  const getAllProducts = async () => {
+    const response = await fetch("/api/products");
+    const data = await response.json();
+    console.log("called", data);
+    return data;
+  };
+
+  const showProducts = (products) => {
+    productsContainer.innerHTML = "";
+    products.forEach((product) => {
+      const productElement = document.createElement("div");
+      productElement.classList.add("product-card");
+      productElement.innerHTML = `
+				<h2>${product.name}</h2>
+				<p class="stock">Stock: ${product.stock > 0 ? "In Stock" : "Out of Stock"}</p>
+				<p class="price">Price: $${product.price}</p>
+				<a href="/product/${product.slug}" type="button" id="showDetailsBtn">Show Details</a>
+			`;
+      productsContainer.appendChild(productElement);
+    });
+  };
+
+  const searchItemsByName = (products) => {
+    const searchInput = document.getElementById("search-input").value;
+    const filteredProducts = products.filter((product) =>
+      product.name.toLowerCase().includes(searchInput.toLowerCase()),
+    );
+    console.log(filteredProducts);
+
+    showProducts(filteredProducts);
+  };
+  (async () => {
+    products = await getAllProducts();
+    showProducts(products);
+    searchItemsByName(products);
+  })();
+</script>
