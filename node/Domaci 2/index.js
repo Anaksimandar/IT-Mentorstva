@@ -1,31 +1,19 @@
 const http = require("http");
-const { URL } = require("url");
-const news = require("../news.json");
+
 // Domaci 1:
-// Ispisati odgovor, potpuno u html formatu, ukljucujuci doctype, head i body.
+// Ako korisnik poseti '/kontakt' stranicu, preusmeriti ga na glavnu stranicu uz odgovarajuci statusni kod.
 const server = http.createServer((req, res) => {
-	const url = new URL(req.url, "http://localhost:3000");
-	res.setHeader("Content-Type", "text/html");
+	res.statusCode = 200;
+	res.setHeader("Content-Type", "text/plain");
 
-	if (url.pathname === "/") {
-		let newsHtml = "";
-		news.forEach((item) => {
-			newsHtml += `<h2>${item.title}</h2>
-                <p>${item.releaseDate}</p>`;
-		});
-		const html = `<!DOCTYPE html>
-        <html lang="en">
-            <head>
-                <meta charset="UTF-8">
-                <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <title>News</title>
-            </head>
-            <body>
-                ${newsHtml}
-            </body>
-        </html>`;
-
-		res.end(html);
+	if (req.url === "/") {
+		res.end("Dobrodosli na glavnu stranicu");
+	} else if (req.url === "/kontakt") {
+		res.writeHead(301, { location: "/" });
+		res.end();
+	} else {
+		res.statusCode = 404;
+		res.end("404 Not Found");
 	}
 });
 
