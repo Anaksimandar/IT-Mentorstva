@@ -17,12 +17,19 @@ const pageHandler = (req, res) => {
   }
 };
 const staticHandler = (req, res) => {
+  const imageExtensions = ["jpg", "jpeg", "png", "gif"];
   const extension = req.url.split(".")[1];
   const staticPath = path.join(__dirname, "..", req.url);
+  console.log(path.join(__dirname, "..", req.url));
+  const imageExtenstion = imageExtensions.includes(extension);
 
   try {
-    const file = fs.readFileSync(staticPath, "utf8");
-    res.writeHead(200, { "Content-Type": `text/${extension}` });
+    const file = fs.readFileSync(staticPath, imageExtenstion ? null : "utf8"); // ako je slika onda ne koristimo encoding, jer nam treba buffer, a ne string
+    if (imageExtenstion) {
+      res.writeHead(200, { "Content-Type": `image/${extension}` });
+    } else {
+      res.writeHead(200, { "Content-Type": `text/${extension}` });
+    }
     return res.end(file);
   } catch (err) {
     res.writeHead(404, { "Content-Type": "text/plain" });
