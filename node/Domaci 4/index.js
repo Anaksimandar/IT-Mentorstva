@@ -18,10 +18,12 @@ const server = http.createServer((req, res) => {
         res.end();
       } else {
         const users = JSON.parse(data);
-        res.write("<h1>Korisnici</h1>");
+        let htmlResponse = "";
+        htmlResponse += "<h1>Korisnici</h1>";
         users.forEach((user) => {
-          res.write(`<p>Email: ${user.email}</p>`);
+          htmlResponse += `<p>Email: ${user.email}</p>`;
         });
+        res.write(htmlResponse);
         res.end();
       }
     });
@@ -42,7 +44,7 @@ const server = http.createServer((req, res) => {
           // check if user already exists
           const userExists = users.some((user) => user.email === userData.email);
           if (userExists) {
-            res.writeHead(400, { "Content-Type": "text/html; charset=utf-8" });
+            res.writeHead(409, { "Content-Type": "text/html; charset=utf-8" });
             res.write("<h1>Korisnik već postoji</h1>");
             res.end();
           } else {
