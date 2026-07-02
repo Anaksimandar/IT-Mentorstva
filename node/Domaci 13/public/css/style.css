@@ -16,10 +16,13 @@ ul {
   padding: 8px;
   display: flex;
 }
-a {
-  text-decoration: none;
+nav a {
   color: white;
   padding: 10px;
+}
+
+a {
+  text-decoration: none;
 }
 
 body {

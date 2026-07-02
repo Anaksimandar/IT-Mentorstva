@@ -1,0 +1,16 @@
+<h1>Cart</h1>
+
+<% if (item && item.length > 0) { %>
+  <ul class="item-list">
+    <% item.forEach((i) => { %>
+      <li class="item-card">
+        <strong><%= i.name %></strong>
+        <p>Price: <%= i.price %>$</p>
+        <p>Stock: <%= i.stock %></p>
+        <p>Quantity: <%= i.quantity %></p>
+      </li>
+    <% }); %>
+  </ul>
+<% } else { %>
+  <p>No items found.</p>
+<% } %>

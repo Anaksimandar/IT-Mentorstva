@@ -1,0 +1,12 @@
+<h2><%= item.name ?? '' %></h2>
+<% if (item.price != null) { %>
+  <p>Price: <%= item.price %>$</p>
+<% } %>
+<% if (item.stock != null) { %>
+  <p>Stock: <%= item.stock %></p>
+<% } %>
+<form action="/api/add-to-cart" method="post">
+  <input type="hidden" name="item_id" value="<%= item.id %>">
+  <button type="submit">Add to Cart</button>
+</form>
+<p><a href="/">Back to home</a></p>

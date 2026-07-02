@@ -4,13 +4,19 @@ const querystring = require("querystring");
 const ejs = require("ejs");
 const pool = require("../db/db");
 const { registerUser, loginUser } = require("../services/user.service");
-const { createSession } = require("../services/session.service");
+const {
+  createSession,
+  getSession,
+  getSessionId,
+  logoutSession,
+  addToCart,
+} = require("../services/session.service");
 
 const pageHandler = async (req, res, data = {}) => {
-  const pageName = req.url === "/" ? "index" : req.url.slice(1);
+  const pageName = data.pageName || (req.url === "/" ? "index" : req.url.slice(1));
   const pagePath = path.join(__dirname, "..", "views", `${pageName}.ejs`);
   const layoutPath = path.join(__dirname, "..", "views", "layout.ejs");
-
+  const userSession = getSession(req);
   if (pageName === "index") {
     try {
       const [items] = await pool.query("SELECT * FROM items");
@@ -21,16 +27,14 @@ const pageHandler = async (req, res, data = {}) => {
       data.items = [];
     }
   }
-
-  console.log(layoutPath);
-  ejs.renderFile(pagePath, data, (err, html) => {
+  ejs.renderFile(pagePath, { ...data, user: userSession }, (err, html) => {
     if (err) {
       console.error(err);
       res.writeHead(500, { "Content-Type": "text/html; charset=utf-8" });
       res.write("<h1>Greška prilikom učitavanja stranice</h1>");
       return res.end();
     }
-    ejs.renderFile(layoutPath, { body: html }, (err, finalHtml) => {
+    ejs.renderFile(layoutPath, { body: html, user: userSession }, (err, finalHtml) => {
       if (err) {
         console.error(err);
         res.writeHead(500, { "Content-Type": "text/html; charset=utf-8" });
@@ -97,8 +101,8 @@ const apiHandler = async (req, res) => {
         if (userId) {
           const sessionId = createSession(userId);
           res.setHeader("Set-Cookie", `sessionId=${sessionId}; HttpOnly; Path=/; Max-Age=3600`);
-          res.writeHead(200, { "Content-Type": "application/json" });
-          res.end(JSON.stringify({ message: "Registration successful", userId }));
+          res.writeHead(302, { Location: "/" });
+          return res.end(); // Always stop execution after sending // Redirect to home page after logout
         } else {
           res.writeHead(500, { "Content-Type": "application/json" });
           res.end(JSON.stringify({ message: "Error creating user" }));
@@ -140,12 +144,14 @@ const apiHandler = async (req, res) => {
 
       try {
         const userId = await loginUser(userData.email, userData.password);
+        console.log(userId);
+
         if (userId) {
           // create session and set cookie here if needed
           const sessionId = createSession(userId);
           res.setHeader("Set-Cookie", `sessionId=${sessionId}; HttpOnly; Path=/; Max-Age=3600`);
-          res.writeHead(200, { "Content-Type": "application/json" });
-          res.end(JSON.stringify({ message: "Login successful", userId }));
+          res.writeHead(302, { Location: "/" });
+          return res.end();
         } else {
           res.writeHead(401, { "Content-Type": "application/json" });
           res.end(JSON.stringify({ message: "Invalid email or password" }));
@@ -156,6 +162,39 @@ const apiHandler = async (req, res) => {
         res.end(JSON.stringify({ message: "Database error" }));
       }
     });
+  } else if (req.url === "/api/logout" && req.method === "GET") {
+    const sessionId = req.headers.cookie?.split("sessionId=")[1];
+    if (sessionId) {
+      const cookie = logoutSession(sessionId);
+      res.setHeader("Set-Cookie", cookie);
+    }
+    res.writeHead(302, { Location: "/" });
+    return res.end(); // Always stop execution after sending // Redirect to home page after logout
+  } else if (req.url === "/api/add-to-cart" && req.method === "POST") {
+    let body = "";
+    req.on("data", (chunk) => {
+      body += chunk.toString();
+    });
+    req.on("end", async () => {
+      const formData = querystring.parse(body);
+      const sessionId = getSessionId(req);
+      if (sessionId) {
+        const succesfullyAdded = addToCart(sessionId, formData.item_id);
+        if (succesfullyAdded) {
+          const previousUrl = req.headers["referer"] || "/";
+          console.log(previousUrl);
+
+          res.writeHead(302, { Location: previousUrl });
+          return res.end();
+        }
+      }
+      res.writeHead(401, { "Content-Type": "application/json" });
+      return res.end(JSON.stringify({ message: "Not authenticated" }));
+      return res.end();
+    });
+  } else {
+    res.writeHead(404, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ message: "API endpoint not found" }));
   }
 };
 

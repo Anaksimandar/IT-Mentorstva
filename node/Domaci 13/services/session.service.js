@@ -3,13 +3,34 @@ const fs = require("fs");
 const path = require("path");
 
 const FILE_PATH = path.join(__dirname, "../data/sessions.json");
-console.log(FILE_PATH);
+
 const createSession = (userId) => {
   const sessionId = crypto.randomBytes(16).toString("hex");
   const session = { userId, createdAt: Date.now() };
   sessions[sessionId] = session;
   saveSessions(sessions);
   return sessionId;
+};
+
+const addToCart = (sessionId, itemId) => {
+  const session = sessions[sessionId];
+  console.log(session);
+
+  if (!session) {
+    return false;
+  }
+  if (!Array.isArray(session.shoppingCart)) {
+    session.shoppingCart = [];
+  }
+  session.shoppingCart.push(itemId);
+  saveSessions(sessions);
+  return true;
+};
+
+const logoutSession = (sessionId) => {
+  delete sessions[sessionId];
+  saveSessions(sessions);
+  return "sessionId=; Path=/; Max-Age=0";
 };
 
 const isUserLoggedIn = (sessionId) => {
@@ -46,15 +67,51 @@ const saveSessions = (sessions) => {
   }
 };
 
-const getSession = (req) => {
-  const cookieHeader = req.headers.cookie;
+const getSessionId = (req) => {
+  const cookieHeader = req?.headers.cookie;
   if (!cookieHeader) {
-    return null; // No cookies found in the request
+    return null;
   }
-  const sessionId = cookieHeader.split("sessionId=")[1];
-  return sessions[sessionId];
+
+  const match = cookieHeader.match(/(?:^|;\s*)sessionId=([^;]+)/);
+  return match ? match[1] : null;
+};
+
+const getSession = (req) => {
+  const sessionId = getSessionId(req);
+  if (!sessionId) {
+    return null;
+  }
+
+  const session = sessions[sessionId];
+  console.log(session);
+
+  if (!session) {
+    return null;
+  }
+
+  return { ...session, sessionId, shoppingCart: session.shoppingCart || [] };
+};
+
+const getCartItemsIds = (req) => {
+  const session = getSession(req);
+  console.log(session);
+
+  if (!session) return [];
+
+  return session.shoppingCart || [];
 };
 
 const sessions = loadSessions();
 
-module.exports = { createSession, loadSessions, sessions, isUserLoggedIn, getSession };
+module.exports = {
+  createSession,
+  loadSessions,
+  sessions,
+  isUserLoggedIn,
+  getSession,
+  getSessionId,
+  logoutSession,
+  addToCart,
+  getCartItemsIds,
+};

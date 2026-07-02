@@ -13,8 +13,11 @@
         <% if (item.stock != null) { %>
           <p>Stock: <%= item.stock %></p>
         <% } %>
+        <a href="/product/<%= item.slug %>">See more</a>
       </li>
+      
     <% }); %>
+    
   </ul>
 <% } else { %>
   <p>No items found.</p>
