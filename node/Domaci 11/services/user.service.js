@@ -23,8 +23,6 @@ const loginUser = async (email, password) => {
     if (!user) {
       return null; // No user found with the provided email
     }
-    console.log("User found for login:", user);
-    console.log(password);
     const isPasswordSame = await bcrypt.compare(password, user.password);
     if (!isPasswordSame) {
       return null; // Password does not match
