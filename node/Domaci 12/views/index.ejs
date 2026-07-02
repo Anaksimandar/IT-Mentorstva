@@ -1,0 +1,21 @@
+<h2>Home section</h2>
+<% if (user) { %>
+  <p>Welcome <%= user.name %>!</p>
+<% } %>
+<% if (items && items.length > 0) { %>
+  <ul class="item-list">
+    <% items.forEach((item) => { %>
+      <li class="item-card">
+        <strong><%= item.name ?? item.title ?? `Item #${item.id}` %></strong>
+        <% if (item.price != null) { %>
+          <span><%= item.price %>$</span>
+        <% } %>
+        <% if (item.stock != null) { %>
+          <p>Stock: <%= item.stock %></p>
+        <% } %>
+      </li>
+    <% }); %>
+  </ul>
+<% } else { %>
+  <p>No items found.</p>
+<% } %>
