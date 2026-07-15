@@ -1,0 +1,35 @@
+<h2><%= item.name ?? '' %></h2>
+<% if (item.price != null) { %>
+  <p>Price: <%= item.price %>$</p>
+<% } %>
+<% if (item.stock != null) { %>
+  <p>Stock: <%= item.stock %></p>
+<% } %>
+<input type="hidden" name="item_id" value="<%= item.id %>">
+<form action="/api/add-to-cart" method="post"></form>
+<button id="addToCartBtn" type="submit">Add to Cart</button>
+<p><a href="/">Back to home</a></p>
+
+<script>
+  const addToCartBtn = document.getElementById('addToCartBtn');
+  const addToCart = async () => {
+    const itemId = document.querySelector('input[name="item_id"]').value;
+    console.log('Adding item to cart:', itemId);
+    try{
+      const response = await fetch('/api/add-to-cart', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ item_id: itemId })
+    })
+    } catch (error) {
+      console.error('Error adding item to cart:', error);
+    }
+  }
+
+  addToCartBtn.addEventListener('click', (event) => {
+    event.preventDefault();
+    addToCart();
+  });
+</script>

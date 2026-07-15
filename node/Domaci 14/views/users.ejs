@@ -1,0 +1,15 @@
+<h2>Users section</h2>
+<% if (users && users.length > 0) { %>
+  <ul class="item-list">
+    <% users.forEach((user) => { %>
+      <li class="user-card">
+        <strong><%= user.name ` %></strong>
+        <% if (user.price != null) { %>
+          <span><%= user.price %>$</span>
+        <% } %>
+      </li>
+    <% }); %>
+  </ul>
+<% } else { %>
+  <p>No users found.</p>
+<% } %>
