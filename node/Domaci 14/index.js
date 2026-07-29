@@ -16,32 +16,69 @@ const server = http.createServer(async (req, res) => {
     } else if (req.url === "/about") {
       pageHandler(req, res, { pageName: "about" });
       return;
+    } else if (req.url === "/contact") {
+      pageHandler(req, res, { pageName: "contact" });
+      return;
     } else if (req.url === "/sign-in") {
       pageHandler(req, res, { pageName: "sign-in" });
       return;
     } else if (req.url === "/cart" && req.method === "GET") {
-      const itemIds = getCartItemsIds(req);
-      const items = await getCartItems(itemIds);
-      console.log(items);
-      return pageHandler(req, res, { item: items, pageName: "cart" });
-      return res.writeHead(400, { "Content-Type": "application/json" });
-      return res.end(JSON.stringify({ message: "All fields are required" }));
+      return pageHandler(req, res, { pageName: "cart" });
     } else if (req.url === "/login") {
       pageHandler(req, res, { pageName: "login" });
       return;
-    }
-    const productMatch = req.url.match(/^\/product\/([a-z0-9-]+)$/);
-    if (productMatch) {
-      const productName = productMatch[1];
-      const item = await getItemBySlug(productName);
-      if (item) {
-        pageHandler(req, res, { item, pageName: "product" });
-        return;
+    } else if (req.url === "/checkout" && req.method === "POST") {
+      const userSession = getSession(req);
+      if (!userSession) {
+        res.writeHead(302, { Location: "/login" });
+        return res.end();
       }
+      apiHandler(req, res);
+    } else if (req.url === "/checkout" && req.method === "GET") {
+      const userSession = getSession(req);
+      if (!userSession) {
+        res.writeHead(302, { Location: "/login" });
+        return res.end();
+      }
+      const cartItems = await getCartItems(userSession.shoppingCart || []);
+      const total = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+      pageHandler(req, res, { pageName: "checkout", cartItems, total });
+      return;
+    } else if (req.url === "/orders" && req.method === "GET") {
+      const userSession = getSession(req);
+      if (!userSession) {
+        res.writeHead(302, { Location: "/login" });
+        return res.end();
+      }
+      pageHandler(req, res, { pageName: "orders" });
     }
-    res.writeHead(404, { "Content-Type": "text/html; charset=utf-8" });
-    res.write("<h1>Stranica nije pronađena</h1>");
-    return res.end();
+  }
+
+  const orderMatch = req.url.match(/^\/order?\/([0-9]+)$/);
+  if (orderMatch) {
+    const userSession = getSession(req);
+    if (!userSession) {
+      res.writeHead(302, { Location: "/login" });
+      return res.end();
+    }
+
+    const orderId = orderMatch[1];
+    console.log("Order ID:", orderId); // Log the orderId to verify it's being captured correctly
+    pageHandler(req, res, {
+      pageName: "order-details",
+      orderId,
+    });
+    return;
+  }
+
+  const productMatch = req.url.match(/^\/product\/([a-z0-9-]+)$/);
+  if (productMatch) {
+    const productName = productMatch[1];
+    const item = await getItemBySlug(productName);
+    if (item) {
+      pageHandler(req, res, { item, pageName: "product" });
+      return;
+    }
   }
 });
 

@@ -1,0 +1,51 @@
+<h1>My Orders</h1>
+<div class="main">
+  <div class="my-orders item-list"></div>
+</div>
+
+<script>
+  const getOrdersByUserId = async () => {
+    try {
+      const response = await fetch("/api/orders", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch orders");
+      }
+
+      const orders = await response.json();
+      console.log("Orders:", orders);
+      const ordersContainer = document.querySelector(".my-orders");
+      ordersContainer.innerHTML = "";
+
+      if (orders.length === 0) {
+        ordersContainer.innerHTML = "<p>No orders found.</p>";
+        return;
+      }
+
+      orders.forEach((order) => {
+        const orderElement = document.createElement("div");
+        orderElement.classList.add("item-card");
+        orderElement.innerHTML = `
+                    <h3>Order ID: ${order.id}</h3>
+                    <p>Full Name: ${order.full_name}</p>
+                    <p>Email: ${order.email}</p>
+                    <p>Address: ${order.address}</p>
+                    <p>City: ${order.city}</p>
+                    <p>Zip: ${order.zip}</p>
+                    <p>Payment Method: ${order.payment_method}</p>
+                    <a href="/order/${order.id}" class="view-order-details">View Order Details</a>
+                `;
+        ordersContainer.appendChild(orderElement);
+      });
+    } catch (error) {
+      console.error("Error fetching orders:", error);
+    }
+  };
+
+  getOrdersByUserId();
+</script>

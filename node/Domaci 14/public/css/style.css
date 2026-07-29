@@ -31,6 +31,20 @@ body {
   padding: 0;
 }
 
+.order-items-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 12px;
+}
+
+.order-item-row {
+  display: block;
+  width: 100%;
+  padding: 4px 0;
+  border-bottom: 1px solid #eee;
+}
+
 .container {
   max-width: 1200px;
   margin: 0 auto;
@@ -40,9 +54,10 @@ body {
 
 .item-list {
   display: grid;
-  grid-template-columns: repeat(3, 1fr); /* 3 equal-width columns */
-  grid-template-rows: auto; /* Row height fits content */
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 20px;
+  list-style: none;
+  padding: 0;
 }
 
 .item-card {
@@ -52,4 +67,5 @@ body {
   border-radius: 8px;
   padding: 16px;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  width: 100%;
 }

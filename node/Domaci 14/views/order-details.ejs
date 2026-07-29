@@ -1,0 +1,59 @@
+<h1>Order Details</h1>
+<div class="main">
+  <div class="order-details item-card"></div>
+</div>
+
+<script>
+  const orderId = "<%= orderId %>";
+
+  const loadOrderDetails = async () => {
+    try {
+      const response = await fetch(`/api/order/${orderId}`);
+      if (!response.ok) {
+        throw new Error("Failed to fetch order details");
+      }
+
+      const orderItems = await response.json();
+      const container = document.querySelector(".order-details");
+      container.innerHTML = "";
+
+      if (!orderItems.length) {
+        container.innerHTML = "<p>No items found for this order.</p>";
+        return;
+      }
+
+      const firstItem = orderItems[0];
+      container.innerHTML = `
+        <h2>Order #${firstItem.order_id}</h2>
+        <p><strong>Customer:</strong> ${firstItem.full_name}</p>
+        <p><strong>Email:</strong> ${firstItem.email}</p>
+        <p><strong>Address:</strong> ${firstItem.address}</p>
+        <p><strong>City:</strong> ${firstItem.city}</p>
+        <p><strong>Zip:</strong> ${firstItem.zip}</p>
+        <p><strong>Payment:</strong> ${firstItem.payment_method}</p>
+        <h3>Items</h3>
+      `;
+
+      const list = document.createElement("div");
+      const totalElement = document.createElement("p");
+      list.className = "order-items-list";
+
+      let total = 0;
+      orderItems.forEach((item) => {
+        const row = document.createElement("div");
+        row.className = "order-item-row";
+        row.textContent = `${item.name} x${item.quantity} - ${item.price} EUR`;
+        list.appendChild(row);
+        total += item.price * item.quantity;
+      });
+      totalElement.innerHTML = `<strong>Total:</strong> ${total.toFixed(2)} EUR`;
+      list.appendChild(totalElement);
+      container.appendChild(list);
+    } catch (error) {
+      console.error(error);
+      document.querySelector(".order-details").innerHTML = "<p>Unable to load order details.</p>";
+    }
+  };
+
+  loadOrderDetails();
+</script>

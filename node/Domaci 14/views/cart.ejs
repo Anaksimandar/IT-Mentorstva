@@ -1,16 +1,45 @@
 <h1>Cart</h1>
+<div class="flex-container">
+  <ul class="item-list" id="items-list"></ul>
+</div>
+<a href="/checkout" id="checkoutBtn">Proceed to Checkout</a>
+<script>
+  const getCartItems = async () => {
+    try {
+      const response = await fetch("/api/cart");
+      const items = await response.json();
+      return items;
+    } catch (error) {
+      console.error("Error fetching cart items:", error);
+      return [];
+    }
+  };
 
-<% if (item && item.length > 0) { %>
-  <ul class="item-list">
-    <% item.forEach((i) => { %>
-      <li class="item-card">
-        <strong><%= i.name %></strong>
-        <p>Price: <%= i.price %>$</p>
-        <p>Stock: <%= i.stock %></p>
-        <p>Quantity: <%= i.quantity %></p>
-      </li>
-    <% }); %>
-  </ul>
-<% } else { %>
-  <p>No items found.</p>
-<% } %>
+  const showCartItems = async () => {
+    const itemsList = document.getElementById("items-list");
+    try {
+      const items = await getCartItems();
+      console.log("Displaying cart items:", items);
+      let html = "";
+      if (items.length === 0) {
+        html = "<li>Your cart is empty.</li>";
+      } else {
+        items.forEach((item) => {
+          html += `
+          <li class="item-card">
+            <p>${item.stock != null ? `Stock: ${item.stock}` : ""}</p>
+            <strong>${item.name}</strong>
+            <span>${item.price}$</span>
+            <a href="/product/${item.slug}">View Details</a>
+          </li>
+        `;
+        });
+      }
+
+      itemsList.innerHTML = html;
+    } catch (error) {
+      console.error("Error fetching cart items:", error);
+    }
+  };
+  showCartItems();
+</script>

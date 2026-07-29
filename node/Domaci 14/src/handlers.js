@@ -3,7 +3,7 @@ const path = require("path");
 const querystring = require("querystring");
 const ejs = require("ejs");
 const pool = require("../db/db");
-const { getAllItems } = require("../services/product.service");
+const { getAllItems, getCartItems } = require("../services/product.service");
 const { registerUser, loginUser } = require("../services/user.service");
 const {
   createSession,
@@ -13,6 +13,7 @@ const {
   addToCart,
 } = require("../services/session.service");
 const { successResponse, successCreatedResponse } = require("../helper/apiResponseHelper");
+const { createOrder, getOrdersByUserId, getOrderById } = require("../services/order.service");
 
 const pageHandler = async (req, res, data = {}) => {
   const pageName = data.pageName || (req.url === "/" ? "index" : req.url.slice(1));
@@ -185,6 +186,113 @@ const apiHandler = async (req, res) => {
       console.error("Database error loading items:", dbError);
       res.writeHead(500, { "Content-Type": "application/json" });
       res.end(JSON.stringify({ message: "Database error" }));
+    }
+  } else if (req.url === "/api/cart" && req.method === "GET") {
+    const session = getSession(req);
+    if (!session) {
+      res.writeHead(401, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ message: "Not authenticated" }));
+      return;
+    }
+    const items = await getCartItems(session.shoppingCart);
+    successResponse(res, items);
+  } else if (req.url === "/api/orders" && req.method === "GET") {
+    const session = getSession(req);
+    if (!session) {
+      res.writeHead(401, { "Content-Type": "application/json" });
+      return res.end(JSON.stringify({ message: "Not authenticated" }));
+    }
+
+    try {
+      const orders = await getOrdersByUserId(session.userId);
+      successResponse(res, orders);
+    } catch (error) {
+      console.error("Error fetching orders:", error);
+      res.writeHead(500, { "Content-Type": "application/json" });
+      return res.end(JSON.stringify({ message: "Database error" }));
+    }
+  } else if (req.url.startsWith("/api/order/") && req.method === "GET") {
+    const session = getSession(req);
+    if (!session) {
+      res.writeHead(401, { "Content-Type": "application/json" });
+      return res.end(JSON.stringify({ message: "Not authenticated" }));
+    }
+
+    const orderMatch = req.url.match(/^\/api\/order\/([0-9]+)$/);
+    const orderId = orderMatch ? orderMatch[1] : null;
+
+    if (!orderId) {
+      res.writeHead(400, { "Content-Type": "application/json" });
+      return res.end(JSON.stringify({ message: "Missing order id" }));
+    }
+
+    try {
+      const order = await getOrderById(session.userId, orderId);
+      successResponse(res, order);
+    } catch (error) {
+      console.error("Error fetching order details:", error);
+      res.writeHead(500, { "Content-Type": "application/json" });
+      return res.end(JSON.stringify({ message: "Database error" }));
+    }
+  } else if (req.url === "/api/checkout" && req.method === "POST") {
+    const session = getSession(req);
+    if (!session) {
+      res.writeHead(401, { "Content-Type": "application/json" });
+      return res.end(JSON.stringify({ message: "Not authenticated" }));
+    }
+    try {
+      const rawBody = await readRequestBody(req);
+      const data = rawBody ? JSON.parse(rawBody) : {};
+      console.log("Received checkout body:", data);
+
+      const cartItems = await getCartItems(session.shoppingCart || []);
+      const total = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+
+      data.userId = session.userId;
+      data.items = cartItems;
+      data.total = total;
+
+      const orderResult = await createOrder(data);
+      successResponse(res, orderResult);
+    } catch (error) {
+      console.error("Error creating order:", error);
+      res.writeHead(400, { "Content-Type": "application/json" });
+      return res.end(JSON.stringify({ message: "Invalid request body" }));
+    }
+  } else if (req.url === "/api/orders" && req.method === "GET") {
+    const session = getSession(req);
+    if (!session) {
+      res.writeHead(401, { "Content-Type": "application/json" });
+      return res.end(JSON.stringify({ message: "Not authenticated" }));
+    }
+    const rawBody = await readRequestBody(req);
+    const data = rawBody ? JSON.parse(rawBody) : {};
+    try {
+      const orders = await getOrdersByUserId(session.userId);
+      successResponse(res, orders);
+    } catch (error) {
+      console.error("Error fetching orders:", error);
+      res.writeHead(500, { "Content-Type": "application/json" });
+      return res.end(JSON.stringify({ message: "Database error" }));
+    }
+  } else if (req.url.startsWith("/api/orders/") && req.method === "GET") {
+    const orderId = req.url.split("/api/orders/")[1];
+    const session = getSession(req);
+    if (!session) {
+      res.writeHead(401, { "Content-Type": "application/json" });
+      return res.end(JSON.stringify({ message: "Not authenticated" }));
+    }
+    try {
+      const order = await getOrderById(orderId);
+      if (!order) {
+        res.writeHead(404, { "Content-Type": "application/json" });
+        return res.end(JSON.stringify({ message: "Order not found" }));
+      }
+      successResponse(res, order);
+    } catch (error) {
+      console.error("Error fetching order details:", error);
+      res.writeHead(500, { "Content-Type": "application/json" });
+      return res.end(JSON.stringify({ message: "Database error" }));
     }
   } else {
     res.writeHead(404, { "Content-Type": "application/json" });

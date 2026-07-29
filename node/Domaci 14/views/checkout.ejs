@@ -1,0 +1,62 @@
+<form id="checkoutForm">
+  <h2>Shipping Address</h2>
+  <div><label for="fullName">Full Name: </label><input name="fullName" required/></div>
+  <div><label for="email">Email: </label><input name="email" type="email" required/></div>
+  <div><label for="city">City: </label><input name="city" required /> </div>
+  <div><label for="address">Address: </label><input name="address" required /></div>
+  <div><label for="zip">ZIP Code: </label><input name="zip" required /></div>
+
+ <h2>Payment Method</h2>
+  <div>
+    <label><input type="radio" name="paymentMethod" value="cash" checked /> Cash on Delivery</label>
+  </div>
+  <div>
+    <label><input type="radio" name="paymentMethod" value="card" /> Card</label>
+  </div>
+
+  <h2>Order Summary</h2>
+  <ul>
+    <% cartItems.forEach(item => { %>
+      <li class="item-card"><%= item.name %> x <%= item.quantity %> — $<%= (item.price * item.quantity).toFixed(2) %></li>
+    <% }) %>
+  </ul>
+  <p><strong>Total: $<%= total.toFixed(2) %></strong></p>
+
+  <button type="submit">Place Order</button>
+  <div id="checkoutError"></div>
+</form>
+
+<script>
+  const checkoutForm = document.getElementById('checkoutForm');
+  const checkoutError = document.getElementById('checkoutError');
+  const createOrder = async (orderData) => {
+    try {
+      const response = await fetch('/api/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(orderData)
+      });
+      if (!response.ok) {
+        throw new Error('Failed to create order');
+      }
+      const result = await response.json();
+      return result;
+    } catch (error) {
+      console.error('Error creating order:', error);
+      throw error;
+    }
+  };
+  checkoutForm.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const formData = new FormData(checkoutForm);
+    const data = Object.fromEntries(formData.entries());
+    try {
+      const orderResult = await createOrder(data);
+      alert('Order placed successfully! Order ID: ' + orderResult.orderId); // Show alert with order ID
+      // Optionally, redirect to a confirmation page or show a success message
+    } catch (error) {
+      checkoutError.textContent = 'Error placing order. Please try again.';
+    }
+    
+  });
+</script>
