@@ -1,22 +1,31 @@
-<form action="/api/login" method="POST">
-  <div>
-    <label for="email">Email:</label>
-    <input type="email" id="email" name="email" required />
-  </div>
-  <div>
-    <label for="password">Password:</label>
-    <input type="password" id="password" name="password" required />
-  </div>
-  <button id="loginBtn" type="submit">Login</button>
-</form>
-<a href="/sign-in">If you don't have an account, sign up here</a>
+<section class="auth-card" aria-labelledby="login-title">
+  <h2 class="page-title" id="login-title">Welcome back</h2>
+  <p class="section-copy">Sign in to continue shopping and view your orders.</p>
+  <form action="/api/login" method="POST" class="auth-form">
+    <div class="form-group">
+      <label for="email">Email address</label>
+      <input type="email" id="email" name="email" autocomplete="email" required />
+    </div>
+    <div class="form-group">
+      <label for="password">Password</label>
+      <input
+        type="password"
+        id="password"
+        name="password"
+        autocomplete="current-password"
+        required
+      />
+    </div>
+    <button class="btn btn-primary" id="loginBtn" type="submit">Log in</button>
+  </form>
+  <p class="auth-help"><a href="/sign-in">Don’t have an account? Create one here</a></p>
+</section>
 
 <script>
   const loginBtn = document.getElementById("loginBtn");
   const loginUser = async () => {
     const email = document.querySelector('input[name="email"]').value;
     const password = document.querySelector('input[name="password"]').value;
-    console.log("Logging in user:", email, password);
     try {
       const response = await fetch("/api/login", {
         method: "POST",
@@ -30,15 +39,16 @@
         throw new Error("Login failed");
       }
       const result = await response.json();
-      console.log("Login response:", result);
       if (result.success) {
-        alert("Login successful!");
-        window.location.href = "/";
+        toastr.success("Login succesfull");
+        setTimeout(() => {
+          window.location.href = "/";
+        }, 1000);
       } else {
-        alert("Login failed: " + result.message);
+        toastr.warning("Login failed" + result.message);
       }
     } catch (error) {
-      alert("Login failed: " + error.message);
+      toastr.error("Login failed" + error.message);
     }
   };
 

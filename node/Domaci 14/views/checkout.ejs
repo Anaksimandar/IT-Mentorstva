@@ -1,34 +1,37 @@
-<form id="checkoutForm">
-  <h2>Shipping Address</h2>
-  <div><label for="fullName">Full Name: </label><input name="fullName" required/></div>
-  <div><label for="email">Email: </label><input name="email" type="email" required/></div>
-  <div><label for="city">City: </label><input name="city" required /> </div>
-  <div><label for="address">Address: </label><input name="address" required /></div>
-  <div><label for="zip">ZIP Code: </label><input name="zip" required /></div>
+<section class="section-card">
+  <form id="checkoutForm">
+    <h2 class="page-title">Shipping address</h2>
+    <div><label for="fullName">Full Name</label><input name="fullName" required /></div>
+    <div><label for="email">Email</label><input name="email" type="email" required /></div>
+    <div><label for="city">City</label><input name="city" required /></div>
+    <div><label for="address">Address</label><input name="address" required /></div>
+    <div><label for="zip">ZIP Code</label><input name="zip" required /></div>
 
- <h2>Payment Method</h2>
-  <div>
-    <label><input type="radio" name="paymentMethod" value="cash" checked /> Cash on Delivery</label>
-  </div>
-  <div>
-    <label><input type="radio" name="paymentMethod" value="card" /> Card</label>
-  </div>
+    <h2 class="page-title">Payment method</h2>
+    <div>
+      <label><input type="radio" name="paymentMethod" value="cash" checked /> Cash on Delivery</label>
+    </div>
+    <div>
+      <label><input type="radio" name="paymentMethod" value="card" /> Card</label>
+    </div>
 
-  <h2>Order Summary</h2>
-  <ul>
-    <% cartItems.forEach(item => { %>
-      <li class="item-card"><%= item.name %> x <%= item.quantity %> — $<%= (item.price * item.quantity).toFixed(2) %></li>
-    <% }) %>
-  </ul>
-  <p><strong>Total: $<%= total.toFixed(2) %></strong></p>
+    <h2 class="page-title">Order summary</h2>
+    <ul class="item-list">
+      <% cartItems.forEach(item => { %>
+        <li class="item-card"><%= item.name %> x <%= item.quantity %> — $<%= (item.price * item.quantity).toFixed(2) %></li>
+      <% }) %>
+    </ul>
+    <p class="price-tag"><strong>Total: $<%= total.toFixed(2) %></strong></p>
 
-  <button type="submit">Place Order</button>
-  <div id="checkoutError"></div>
-</form>
+    <button class="btn btn-primary" type="submit">Place Order</button>
+    <div id="checkoutError" class="section-copy"></div>
+  </form>
+</section>
 
 <script>
   const checkoutForm = document.getElementById('checkoutForm');
   const checkoutError = document.getElementById('checkoutError');
+
   const createOrder = async (orderData) => {
     try {
       const response = await fetch('/api/checkout', {
@@ -46,16 +49,19 @@
       throw error;
     }
   };
+  
   checkoutForm.addEventListener('submit', async (event) => {
     event.preventDefault();
     const formData = new FormData(checkoutForm);
     const data = Object.fromEntries(formData.entries());
     try {
       const orderResult = await createOrder(data);
-      alert('Order placed successfully! Order ID: ' + orderResult.orderId); // Show alert with order ID
-      // Optionally, redirect to a confirmation page or show a success message
+      toastr.success('Order placed successfully! Order ID: ' + orderResult.orderId); // Show alert with order ID
+      setTimeout(() => {
+          window.location.href = "/";
+        }, 1500);
     } catch (error) {
-      checkoutError.textContent = 'Error placing order. Please try again.';
+      toastr.error('Error placing order. Please try again.');
     }
     
   });

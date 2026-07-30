@@ -3,32 +3,44 @@ const path = require("path");
 const querystring = require("querystring");
 const ejs = require("ejs");
 const pool = require("../db/db");
-const { getAllItems, getCartItems } = require("../services/product.service");
-const { registerUser, loginUser } = require("../services/user.service");
+const { getAllItems, getCartItems, getItemById } = require("../services/product.service");
+const { registerUser, loginUser, getUserById } = require("../services/user.service");
+const { readJsonBody } = require("../helper/readJsonBody");
 const {
   createSession,
   getSession,
   getSessionId,
   logoutSession,
   addToCart,
+  clearCart,
+  removeFromCart,
 } = require("../services/session.service");
-const { successResponse, successCreatedResponse } = require("../helper/apiResponseHelper");
+const {
+  successResponse,
+  successCreatedResponse,
+  unauthorizedResponse,
+  dbErrorResponse,
+} = require("../helper/apiResponseHelper");
 const { createOrder, getOrdersByUserId, getOrderById } = require("../services/order.service");
 
 const pageHandler = async (req, res, data = {}) => {
   const pageName = data.pageName || (req.url === "/" ? "index" : req.url.slice(1));
   const pagePath = path.join(__dirname, "..", "views", `${pageName}.ejs`);
   const layoutPath = path.join(__dirname, "..", "views", "layout.ejs");
-  const userSession = getSession(req);
-
-  ejs.renderFile(pagePath, { ...data, user: userSession }, (err, html) => {
+  const session = getSession(req);
+  let user = null;
+  if (session) {
+    user = await getUserById(session.userId);
+  }
+  ejs.renderFile(pagePath, { ...data, user: user }, (err, html) => {
+    console.log(session);
     if (err) {
       console.error(err);
       res.writeHead(500, { "Content-Type": "text/html; charset=utf-8" });
       res.write("<h1>Greška prilikom učitavanja stranice</h1>");
       return res.end();
     }
-    ejs.renderFile(layoutPath, { body: html, user: userSession }, (err, finalHtml) => {
+    ejs.renderFile(layoutPath, { body: html, user: user }, (err, finalHtml) => {
       if (err) {
         console.error(err);
         res.writeHead(500, { "Content-Type": "text/html; charset=utf-8" });
@@ -61,21 +73,16 @@ const staticHandler = (req, res) => {
   }
 };
 
-const readRequestBody = (req) =>
-  new Promise((resolve, reject) => {
-    let body = "";
-
-    req.on("data", (chunk) => {
-      body += chunk.toString();
-    });
-    req.on("end", () => resolve(body));
-    req.on("error", reject);
-  });
-
 const apiHandler = async (req, res) => {
   if (req.url === "/api/sign-in" && req.method === "POST") {
-    const body = await readRequestBody(req);
-    const userData = JSON.parse(body);
+    let userData;
+    try {
+      userData = await readJsonBody(req);
+    } catch (error) {
+      console.error("Error reading JSON body:", error);
+      res.writeHead(400, { "Content-Type": "application/json" });
+      return res.end(JSON.stringify({ message: "Invalid JSON body" }));
+    }
     // validate data
     if (!userData.name || !userData.email || !userData.password || !userData.confirmPassword) {
       res.writeHead(400, { "Content-Type": "application/json" });
@@ -111,8 +118,14 @@ const apiHandler = async (req, res) => {
       return res.end(JSON.stringify({ message: error.message }));
     }
   } else if (req.url === "/api/login" && req.method === "POST") {
-    const body = await readRequestBody(req);
-    let userData = JSON.parse(body);
+    let userData;
+    try {
+      userData = await readJsonBody(req);
+    } catch (error) {
+      console.error("Error reading JSON body:", error);
+      res.writeHead(400, { "Content-Type": "application/json" });
+      return res.end(JSON.stringify({ message: "Invalid JSON body" }));
+    }
     // validate data
     if (!userData.email || !userData.password) {
       res.writeHead(400, { "Content-Type": "application/json" });
@@ -137,39 +150,52 @@ const apiHandler = async (req, res) => {
       }
     } catch (dbError) {
       console.error("Database error during login:", dbError);
-      res.writeHead(500, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ message: "Database error" }));
+      return dbErrorResponse(res);
     }
   } else if (req.url === "/api/logout" && req.method === "POST") {
     const sessionId = req.headers.cookie?.split("sessionId=")[1];
     if (sessionId) {
       const cookie = logoutSession(sessionId);
       res.setHeader("Set-Cookie", cookie);
-      successResponse(res, { message: "Logged out successfully" });
+      return successResponse(res, { message: "Logged out successfully" });
     }
-    res.writeHead(401, { "Content-Type": "application/json" });
-    res.end(JSON.stringify({ message: "No active session found" }));
+    return unauthorizedResponse(res, "No active session found");
     return res.end();
   } else if (req.url === "/api/add-to-cart" && req.method === "POST") {
-    const sessionId = getSessionId(req);
-    if (!sessionId) {
+    const session = getSession(req);
+    if (!session) {
       res.writeHead(401, { "Content-Type": "application/json" });
       return res.end(JSON.stringify({ message: "Not authenticated" }));
     }
 
+    let data;
     try {
-      const rawBody = await readRequestBody(req);
-      const data = rawBody ? JSON.parse(rawBody) : {};
+      data = await readJsonBody(req);
       const itemId = data.item_id;
+      const cartItem = Array.isArray(session.shoppingCart)
+        ? session.shoppingCart.find((entry) => entry.itemId === itemId)
+        : undefined;
+      const quantityInCart = Number(cartItem?.quantity ?? 0);
 
-      console.log("Received add-to-cart body:", data);
-
-      const succesfullyAdded = addToCart(sessionId, itemId);
-      if (succesfullyAdded) {
-        const previousUrl = req.headers["referer"] || "/";
-        res.writeHead(302, { Location: previousUrl });
-        return res.end();
+      if (!itemId || typeof itemId !== "string") {
+        res.writeHead(400, { "Content-Type": "application/json" });
+        return res.end(JSON.stringify({ message: "Invalid item_id" }));
       }
+      const actualItem = await getItemById(itemId);
+      if (!actualItem) {
+        res.writeHead(404, { "Content-Type": "application/json" });
+        return res.end(JSON.stringify({ message: "Item not found" }));
+      }
+      if (actualItem.stock <= quantityInCart) {
+        res.writeHead(400, { "Content-Type": "application/json" });
+        return res.end(JSON.stringify({ message: "Item is out of stock" }));
+      }
+      const succesfullyAdded = addToCart(session.sessionId, itemId);
+      if (succesfullyAdded) {
+        return successResponse(res, { message: "Item added to cart" });
+      }
+      res.writeHead(400, { "Content-Type": "application/json" });
+      return res.end(JSON.stringify({ message: "Could not add item to cart" }));
     } catch (error) {
       console.error("Error adding item to cart:", error);
       res.writeHead(400, { "Content-Type": "application/json" });
@@ -184,8 +210,7 @@ const apiHandler = async (req, res) => {
       successResponse(res, items);
     } catch (dbError) {
       console.error("Database error loading items:", dbError);
-      res.writeHead(500, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ message: "Database error" }));
+      return dbErrorResponse(res);
     }
   } else if (req.url === "/api/cart" && req.method === "GET") {
     const session = getSession(req);
@@ -196,6 +221,48 @@ const apiHandler = async (req, res) => {
     }
     const items = await getCartItems(session.shoppingCart);
     successResponse(res, items);
+  } else if (req.url === "/api/remove-from-cart" && req.method === "POST") {
+    const session = getSession(req);
+    if (!session) {
+      res.writeHead(401, { "Content-Type": "application/json" });
+      return res.end(JSON.stringify({ message: "Not authenticated" }));
+    }
+    let data;
+    try {
+      data = await readJsonBody(req);
+      const itemId = data.item_id;
+      const cartItem = Array.isArray(session.shoppingCart)
+        ? session.shoppingCart.find((entry) => entry.itemId === itemId)
+        : undefined;
+      const quantityInCart = Number(cartItem?.quantity ?? 0);
+
+      if (!itemId || typeof itemId !== "string") {
+        res.writeHead(400, { "Content-Type": "application/json" });
+        return res.end(JSON.stringify({ message: "Invalid item_id" }));
+      }
+      const actualItem = await getItemById(itemId);
+      if (!actualItem) {
+        res.writeHead(404, { "Content-Type": "application/json" });
+        return res.end(JSON.stringify({ message: "Item not found" }));
+      }
+      // if (actualItem.stock <= quantityInCart) {
+      //   res.writeHead(400, { "Content-Type": "application/json" });
+      //   return res.end(JSON.stringify({ message: "Item is out of stock" }));
+      // }
+      const succesfullyAdded = removeFromCart(session.sessionId, itemId);
+      if (succesfullyAdded) {
+        return successResponse(res, { message: "Item removed from cart" });
+      }
+      res.writeHead(400, { "Content-Type": "application/json" });
+      return res.end(JSON.stringify({ message: "Could not add item to cart" }));
+    } catch (error) {
+      console.error("Error adding item to cart:", error);
+      res.writeHead(400, { "Content-Type": "application/json" });
+      return res.end(JSON.stringify({ message: "Invalid request body" }));
+    }
+
+    res.writeHead(400, { "Content-Type": "application/json" });
+    return res.end(JSON.stringify({ message: "Could not add item to cart" }));
   } else if (req.url === "/api/orders" && req.method === "GET") {
     const session = getSession(req);
     if (!session) {
@@ -208,16 +275,13 @@ const apiHandler = async (req, res) => {
       successResponse(res, orders);
     } catch (error) {
       console.error("Error fetching orders:", error);
-      res.writeHead(500, { "Content-Type": "application/json" });
-      return res.end(JSON.stringify({ message: "Database error" }));
+      return dbErrorResponse(res);
     }
   } else if (req.url.startsWith("/api/order/") && req.method === "GET") {
     const session = getSession(req);
     if (!session) {
-      res.writeHead(401, { "Content-Type": "application/json" });
-      return res.end(JSON.stringify({ message: "Not authenticated" }));
+      return unauthorizedResponse(res);
     }
-
     const orderMatch = req.url.match(/^\/api\/order\/([0-9]+)$/);
     const orderId = orderMatch ? orderMatch[1] : null;
 
@@ -228,24 +292,24 @@ const apiHandler = async (req, res) => {
 
     try {
       const order = await getOrderById(session.userId, orderId);
-      successResponse(res, order);
+      return successResponse(res, order);
     } catch (error) {
       console.error("Error fetching order details:", error);
-      res.writeHead(500, { "Content-Type": "application/json" });
-      return res.end(JSON.stringify({ message: "Database error" }));
+      return dbErrorResponse(res);
     }
   } else if (req.url === "/api/checkout" && req.method === "POST") {
     const session = getSession(req);
     if (!session) {
-      res.writeHead(401, { "Content-Type": "application/json" });
-      return res.end(JSON.stringify({ message: "Not authenticated" }));
+      return unauthorizedResponse(res);
     }
+    let data;
     try {
-      const rawBody = await readRequestBody(req);
-      const data = rawBody ? JSON.parse(rawBody) : {};
-      console.log("Received checkout body:", data);
-
+      data = await readJsonBody(req);
       const cartItems = await getCartItems(session.shoppingCart || []);
+      if (cartItems == []) {
+        res.writeHead(400, { "Content-Type": "application/json" });
+        return res.end(JSON.stringify({ message: "Please add items to cart." }));
+      }
       const total = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
       data.userId = session.userId;
@@ -253,7 +317,8 @@ const apiHandler = async (req, res) => {
       data.total = total;
 
       const orderResult = await createOrder(data);
-      successResponse(res, orderResult);
+      clearCart(session.sessionId);
+      return successResponse(res, orderResult);
     } catch (error) {
       console.error("Error creating order:", error);
       res.writeHead(400, { "Content-Type": "application/json" });
@@ -262,37 +327,15 @@ const apiHandler = async (req, res) => {
   } else if (req.url === "/api/orders" && req.method === "GET") {
     const session = getSession(req);
     if (!session) {
-      res.writeHead(401, { "Content-Type": "application/json" });
-      return res.end(JSON.stringify({ message: "Not authenticated" }));
+      return unauthorizedResponse(res);
     }
-    const rawBody = await readRequestBody(req);
-    const data = rawBody ? JSON.parse(rawBody) : {};
     try {
+      const data = await readJsonBody(req);
       const orders = await getOrdersByUserId(session.userId);
-      successResponse(res, orders);
+      return successResponse(res, orders);
     } catch (error) {
       console.error("Error fetching orders:", error);
-      res.writeHead(500, { "Content-Type": "application/json" });
-      return res.end(JSON.stringify({ message: "Database error" }));
-    }
-  } else if (req.url.startsWith("/api/orders/") && req.method === "GET") {
-    const orderId = req.url.split("/api/orders/")[1];
-    const session = getSession(req);
-    if (!session) {
-      res.writeHead(401, { "Content-Type": "application/json" });
-      return res.end(JSON.stringify({ message: "Not authenticated" }));
-    }
-    try {
-      const order = await getOrderById(orderId);
-      if (!order) {
-        res.writeHead(404, { "Content-Type": "application/json" });
-        return res.end(JSON.stringify({ message: "Order not found" }));
-      }
-      successResponse(res, order);
-    } catch (error) {
-      console.error("Error fetching order details:", error);
-      res.writeHead(500, { "Content-Type": "application/json" });
-      return res.end(JSON.stringify({ message: "Database error" }));
+      return dbErrorResponse(res);
     }
   } else {
     res.writeHead(404, { "Content-Type": "application/json" });

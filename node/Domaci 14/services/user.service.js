@@ -50,8 +50,14 @@ const registerUser = async (userData) => {
     throw error;
   }
 };
+
+const getUserById = async (userId) => {
+  const [rows] = await dbconnection.query("SELECT * FROM users WHERE id = ? LIMIT 1", [userId]);
+  return rows[0];
+};
 module.exports = {
   getAllUsers,
   registerUser,
   loginUser,
+  getUserById,
 };

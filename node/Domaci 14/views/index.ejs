@@ -1,30 +1,54 @@
-<h2>Home section</h2>
-<% if (user) { %>
-  <p>Welcome <%= user.name %>!</p>
-<% } else { %>
-  <p>Welcome, guest! Please log in or register.</p>
-<% } %>
-<h3>Items</h3>
-<ul class="item-list" id="items-list"></ul>
+<section class="hero-panel">
+  <div>
+    <div class="badge">✨ Fresh picks for every day</div>
+    <h2 class="hero-title">Browse a polished shopping experience</h2>
+    <p class="hero-copy">
+      Discover products, add favourites to your cart, and keep track of every order in one place.
+    </p>
+    <div class="hero-actions">
+      <a class="btn btn-primary" href="/about">Learn more</a>
+      <a class="btn btn-secondary" href="/cart">View cart</a>
+    </div>
+  </div>
+  <div>
+    <% if (user) { %>
+      <p class="hero-greeting">Welcome back, <strong><%= user.name %></strong>.</p>
+    <% } else { %>
+      <p class="hero-greeting">Welcome, guest. Log in to save your orders and cart.</p>
+    <% } %>
+  </div>
+</section>
+
+<section class="section-card">
+  <div class="section-header">
+    <div>
+      <h3 class="page-title">Featured items</h3>
+      <p class="section-copy">A clean catalog with quick details and simple actions.</p>
+    </div>
+  </div>
+  <ul class="item-list" id="items-list"></ul>
+</section>
+
 <script>
   const getAllItems = async () => {
     try {
       const response = await fetch('/api/items');
       const items = await response.json();
       const itemsList = document.getElementById('items-list');
-      
+
       let html = '';
-      items.forEach(item => {
+      items.forEach((item) => {
         html += `
           <li class="item-card">
-            <p>${item.stock != null ? `Stock: ${item.stock}` : ''}</p>
+            <div class="badge">${item.stock > 0 ? 'In stock' : 'Out of stock'}</div>
             <strong>${item.name}</strong>
-            <span>${item.price}$</span>
-            <a href="/product/${item.slug}">View Details</a>
+            <span class="price-tag">${item.price}$</span>
+            <p class="meta-text">${item.stock != null ? `Stock: ${item.stock}` : 'Limited availability'}</p>
+            <a class="btn btn-secondary" href="/product/${item.slug}">View details</a>
           </li>
         `;
       });
-      
+
       itemsList.innerHTML = html;
     } catch (error) {
       console.error('Error fetching items:', error);

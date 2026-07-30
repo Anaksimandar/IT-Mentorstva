@@ -1,35 +1,73 @@
-<h2><%= item.name ?? '' %></h2>
-<% if (item.price != null) { %>
-  <p>Price: <%= item.price %>$</p>
-<% } %>
-<% if (item.stock != null) { %>
-  <p>Stock: <%= item.stock %></p>
-<% } %>
-<input type="hidden" name="item_id" value="<%= item.id %>">
-<form action="/api/add-to-cart" method="post"></form>
-<button id="addToCartBtn" type="submit">Add to Cart</button>
-<p><a href="/">Back to home</a></p>
+<section class="section-card product-details">
+  <div class="badge">Product spotlight</div>
+  <h2 class="page-title"><%= item.name ?? '' %></h2>
+  <% if (item.price != null) { %>
+    <p class="price-tag">Price: <%= item.price %>$</p>
+  <% } %>
+  <% if (item.stock != null) { %>
+    <p class="meta-text">Stock: <%= item.stock %></p>
+  <% } %>
+
+  <form>
+    <input type="hidden" name="item_id" value="<%= item.id %>">
+    <div class="product-actions">
+      <button class="btn btn-primary" id="addToCartBtn" type="submit">Add to cart</button>
+      <button class="btn btn-danger" id="removeFromCart" type="submit">Remove</button>
+    </div>
+    <a class="btn btn-secondary" href="/">Back to home</a>
+  </form>
+</section>
 
 <script>
   const addToCartBtn = document.getElementById('addToCartBtn');
-  const addToCart = async () => {
+  const removeFromCartBtn = document.getElementById('removeFromCart');
+  const removeFromCart = async () => {
     const itemId = document.querySelector('input[name="item_id"]').value;
-    console.log('Adding item to cart:', itemId);
-    try{
-      const response = await fetch('/api/add-to-cart', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ item_id: itemId })
-    })
+    try {
+      const response = await fetch('/api/remove-from-cart', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ item_id: itemId })
+      });
+      const data = await response.json();
+      console.log(data);
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to remove item to cart');
+      }
+      toastr.success('Item removed succesfully');
     } catch (error) {
-      console.error('Error adding item to cart:', error);
+      toastr.error(error);
     }
   }
+  const addToCart = async () => {
+    const itemId = document.querySelector('input[name="item_id"]').value;
+    try {
+      const response = await fetch('/api/add-to-cart', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ item_id: itemId })
+      });
+      const data = await response.json();
+      console.log(data);
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to add item to cart');
+      }
+      toastr.success('Item added to cart');
+    } catch (error) {
+      toastr.error(error);
+    }
+  };
 
   addToCartBtn.addEventListener('click', (event) => {
     event.preventDefault();
     addToCart();
+  });
+  removeFromCartBtn.addEventListener('click', (event) => {
+    event.preventDefault();
+    removeFromCart();
   });
 </script>

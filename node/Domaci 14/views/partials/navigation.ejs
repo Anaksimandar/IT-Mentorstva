@@ -1,16 +1,17 @@
-<nav>
+<nav class="top-nav">
+  <a class="site-brand" href="/">Urban Cart</a>
   <ul>
-    <li><a href="/">Home</a></li>
-    <li><a href="/about">About</a></li>
-    <li><a href="/contact">Contact</a></li>
-    <li><a href="/cart">Cart</a></li>
-    <li><a href="/orders">Orders</a></li>
-<% if (user) { %>
-  <li><p style="color:white;cursor: pointer;" id="logoutBtn">Logout</p></li>
-<% } else { %>
-  <li><a href="/login">Login</a></li>
-  <li><a href="/sign-in">Register</a></li>
-<% } %>
+    <li><a class="nav-link" href="/">Home</a></li>
+    <li><a class="nav-link" href="/about">About</a></li>
+    <li><a class="nav-link" href="/contact">Contact</a></li>
+    <li><a class="nav-link" href="/cart">Cart</a></li>
+    <li><a class="nav-link" href="/orders">Orders</a></li>
+    <% if (user) { %>
+      <li><button class="nav-link logout-btn" id="logoutBtn" type="button">Logout</button></li>
+    <% } else { %>
+      <li><a class="nav-link" href="/login">Login</a></li>
+      <li><a class="nav-link" href="/sign-in">Register</a></li>
+    <% } %>
   </ul>
 </nav>
 
@@ -31,12 +32,12 @@
         }
 
         const result = await response.json();
-        console.log("Logout response:", result);
-        alert(result.message);
-        window.location.href = "/";
+        toastr.success("Logout successful");
+        setTimeout(() => {
+          window.location.href = "/";
+        }, 1000);
       } catch (error) {
-        console.error("Error logging out:", error);
-        alert("Error logging out: " + error.message);
+        toastr.error("Logout failed: " + error.message);
       }
     });
   }

@@ -4,9 +4,38 @@ const path = require("path");
 
 const FILE_PATH = path.join(__dirname, "../data/sessions.json");
 
+const normalizeCartItems = (cartItems = []) => {
+  if (!Array.isArray(cartItems)) {
+    return [];
+  }
+
+  return cartItems.reduce((acc, item) => {
+    if (!item) {
+      return acc;
+    }
+
+    if (typeof item === "object" && item !== null && "itemId" in item) {
+      acc.push({
+        itemId: String(item.itemId),
+        quantity: Number(item.quantity) > 0 ? Number(item.quantity) : 1,
+      });
+      return acc;
+    }
+
+    const existingItem = acc.find((entry) => String(entry.itemId) === String(item));
+    if (existingItem) {
+      existingItem.quantity += 1;
+      return acc;
+    }
+
+    acc.push({ itemId: String(item), quantity: 1 });
+    return acc;
+  }, []);
+};
+
 const createSession = (userId) => {
   const sessionId = crypto.randomBytes(16).toString("hex");
-  const session = { userId, createdAt: Date.now() };
+  const session = { userId, createdAt: Date.now(), shoppingCart: [] };
   sessions[sessionId] = session;
   saveSessions(sessions);
   return sessionId;
@@ -14,15 +43,54 @@ const createSession = (userId) => {
 
 const addToCart = (sessionId, itemId) => {
   const session = sessions[sessionId];
-  console.log(session);
 
   if (!session) {
     return false;
   }
-  if (!Array.isArray(session.shoppingCart)) {
-    session.shoppingCart = [];
+
+  const normalizedCart = normalizeCartItems(session.shoppingCart);
+  const existingItem = normalizedCart.find((entry) => String(entry.itemId) === String(itemId));
+
+  if (existingItem) {
+    existingItem.quantity += 1;
+  } else {
+    normalizedCart.push({ itemId: String(itemId), quantity: 1 });
   }
-  session.shoppingCart.push(itemId);
+  session.shoppingCart = normalizedCart;
+  saveSessions(sessions);
+  return true;
+};
+
+const removeFromCart = (sessionId, itemId) => {
+  const session = sessions[sessionId];
+
+  if (!session) {
+    return false;
+  }
+
+  const normalizedCart = normalizeCartItems(session.shoppingCart);
+  const existingItem = normalizedCart.find((entry) => String(entry.itemId) === String(itemId));
+
+  if (existingItem) {
+    existingItem.quantity -= 1;
+    if (existingItem.quantity <= 0) {
+      normalizedCart.splice(normalizedCart.indexOf(existingItem), 1);
+    }
+  }
+
+  session.shoppingCart = normalizedCart;
+  saveSessions(sessions);
+  return true;
+};
+
+const clearCart = (sessionId) => {
+  const session = sessions[sessionId];
+
+  if (!session) {
+    return false;
+  }
+
+  session.shoppingCart = [];
   saveSessions(sessions);
   return true;
 };
@@ -84,18 +152,24 @@ const getSession = (req) => {
   }
 
   const session = sessions[sessionId];
-  console.log(session);
-
   if (!session) {
     return null;
   }
 
-  return { ...session, sessionId, shoppingCart: session.shoppingCart || [] };
+  const normalizedCart = normalizeCartItems(session.shoppingCart);
+  if (
+    !Array.isArray(session.shoppingCart) ||
+    session.shoppingCart.some((item) => typeof item === "string")
+  ) {
+    session.shoppingCart = normalizedCart;
+    saveSessions(sessions);
+  }
+
+  return { ...session, sessionId, shoppingCart: normalizedCart };
 };
 
 const getCartItemsIds = (req) => {
   const session = getSession(req);
-  console.log(session);
 
   if (!session) return [];
 
@@ -113,5 +187,7 @@ module.exports = {
   getSessionId,
   logoutSession,
   addToCart,
+  clearCart,
   getCartItemsIds,
+  removeFromCart,
 };

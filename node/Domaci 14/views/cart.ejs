@@ -1,9 +1,18 @@
-<h1>Cart</h1>
-<div class="flex-container">
+<section class="section-card">
+  <div class="section-header">
+    <div>
+      <h2 class="page-title">Your cart</h2>
+      <p class="section-copy">Review your selected items before checkout.</p>
+    </div>
+    <button class="btn btn-primary" id="checkoutBtn">Proceed to checkout</button>
+  </div>
   <ul class="item-list" id="items-list"></ul>
-</div>
-<a href="/checkout" id="checkoutBtn">Proceed to Checkout</a>
+</section>
+
 <script>
+  const itemsList = document.getElementById("items-list");
+  let currentCartItems = [];
+
   const getCartItems = async () => {
     try {
       const response = await fetch("/api/cart");
@@ -16,23 +25,29 @@
   };
 
   const showCartItems = async () => {
-    const itemsList = document.getElementById("items-list");
     try {
       const items = await getCartItems();
-      console.log("Displaying cart items:", items);
+      currentCartItems = items;
       let html = "";
       if (items.length === 0) {
-        html = "<li>Your cart is empty.</li>";
+        html = '<li class="page-empty">Your cart is empty. Start by adding a few products.</li>';
       } else {
         items.forEach((item) => {
+          const lineTotal = (item.price * item.quantity).toFixed(2);
           html += `
-          <li class="item-card">
-            <p>${item.stock != null ? `Stock: ${item.stock}` : ""}</p>
-            <strong>${item.name}</strong>
-            <span>${item.price}$</span>
-            <a href="/product/${item.slug}">View Details</a>
-          </li>
-        `;
+            <li class="item-card">
+              <strong>${item.name}</strong>
+              <p class="meta-text">Qty: ${item.quantity}</p>
+              <span class="price-tag">$${lineTotal}</span>
+              <p class="meta-text">Unit price: $${Number(item.price).toFixed(2)}</p>
+              <p class="meta-text">${item.stock != null ? `Stock: ${item.stock}` : "Available now"}</p>
+              <a class="btn btn-secondary" href="/product/${item.slug}">View details</a>
+              <div class="product-actions">
+                <button class="btn btn-primary" data-action="add" data-item-id="${item.id}" id="addToCartBtn" type="submit">Add to cart</button>
+                <button class="btn btn-danger"  data-action="remove" data-item-id="${item.id}" id="removeFromCart" type="submit">Remove</button>
+              </div>
+            </li>
+          `;
         });
       }
 
@@ -41,5 +56,51 @@
       console.error("Error fetching cart items:", error);
     }
   };
+
+  const addToCartBtn = document.getElementById("addToCartBtn");
+  const removeFromCartBtn = document.getElementById("removeFromCart");
+  const checkoutBtn = document.getElementById("checkoutBtn");
+
+  const checkout = () => {
+    if (currentCartItems.length === 0) {
+      toastr.warning("Your cart is empty. Add items before checkout.");
+      return;
+    }
+    window.location.href = "/checkout";
+  };
+
+  checkoutBtn.addEventListener("click", checkout);
+
+  itemsList.addEventListener("click", async (event) => {
+    const btn = event.target.closest("button[data-item-id]");
+    if (!btn) return; // click wasn't on an action button
+
+    const itemId = btn.dataset.itemId;
+    const action = btn.dataset.action;
+
+    btn.disabled = true; // prevent double-clicks while request is in flight
+
+    try {
+      const endpoint = action === "remove" ? "/api/remove-from-cart" : "/api/add-to-cart";
+      const response = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ item_id: itemId }),
+      });
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(data.message || "Action failed");
+      }
+
+      toastr.success(data.message || "Cart updated");
+      await showCartItems(); // re-render cart with fresh data
+    } catch (error) {
+      toastr.error(error.message);
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
   showCartItems();
 </script>

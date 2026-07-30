@@ -1,7 +1,12 @@
-<h1>My Orders</h1>
-<div class="main">
+<section class="section-card">
+  <div class="section-header">
+    <div>
+      <h2 class="page-title">My orders</h2>
+      <p class="section-copy">Track your recent purchases and open order details anytime.</p>
+    </div>
+  </div>
   <div class="my-orders item-list"></div>
-</div>
+</section>
 
 <script>
   const getOrdersByUserId = async () => {
@@ -18,12 +23,12 @@
       }
 
       const orders = await response.json();
-      console.log("Orders:", orders);
       const ordersContainer = document.querySelector(".my-orders");
       ordersContainer.innerHTML = "";
 
       if (orders.length === 0) {
-        ordersContainer.innerHTML = "<p>No orders found.</p>";
+        ordersContainer.innerHTML =
+          '<div class="page-empty">No orders yet. Your purchases will appear here after checkout.</div>';
         return;
       }
 
@@ -31,15 +36,13 @@
         const orderElement = document.createElement("div");
         orderElement.classList.add("item-card");
         orderElement.innerHTML = `
-                    <h3>Order ID: ${order.id}</h3>
-                    <p>Full Name: ${order.full_name}</p>
-                    <p>Email: ${order.email}</p>
-                    <p>Address: ${order.address}</p>
-                    <p>City: ${order.city}</p>
-                    <p>Zip: ${order.zip}</p>
-                    <p>Payment Method: ${order.payment_method}</p>
-                    <a href="/order/${order.id}" class="view-order-details">View Order Details</a>
-                `;
+          <h3>Order #${order.id}</h3>
+          <p class="meta-text">${order.full_name}</p>
+          <p class="meta-text">${order.email}</p>
+          <p class="meta-text">${order.city}, ${order.zip}</p>
+          <p class="price-tag">${order.payment_method}</p>
+          <a href="/order/${order.id}" class="btn btn-secondary">View order details</a>
+        `;
         ordersContainer.appendChild(orderElement);
       });
     } catch (error) {

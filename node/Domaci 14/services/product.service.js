@@ -11,23 +11,54 @@ const getAllItems = async () => {
   return rows;
 };
 
-const getCartItems = async (itemsIds) => {
-  if (!Array.isArray(itemsIds) || itemsIds.length === 0) return [];
+const getItemById = async (itemId) => {
+  const [rows] = await db.query("SELECT * FROM items WHERE id = ? LIMIT 1", [itemId]);
+  return rows[0];
+};
 
-  const uniqueIds = [...new Set(itemsIds)];
+const normalizeCartItems = (cartItems = []) => {
+  if (!Array.isArray(cartItems)) {
+    return [];
+  }
+
+  return cartItems.reduce((acc, item) => {
+    if (!item) {
+      return acc;
+    }
+
+    if (typeof item === "object" && item !== null && "itemId" in item) {
+      acc.push({
+        itemId: String(item.itemId),
+        quantity: Number(item.quantity) > 0 ? Number(item.quantity) : 1,
+      });
+      return acc;
+    }
+
+    acc.push({ itemId: String(item), quantity: 1 });
+    return acc;
+  }, []);
+};
+
+const getCartItems = async (cartItems) => {
+  const normalizedCart = normalizeCartItems(cartItems);
+  if (normalizedCart.length === 0) return [];
+
+  const itemIds = normalizedCart.map((entry) => entry.itemId);
+  const uniqueIds = [...new Set(itemIds)];
   const placeholders = uniqueIds.map(() => "?").join(",");
   const sql = `SELECT i.* FROM items i WHERE i.id IN (${placeholders})`;
   const [rows] = await db.query(sql, uniqueIds);
 
   const quantityMap = new Map();
-  itemsIds.forEach((id) => {
-    quantityMap.set(id, (quantityMap.get(id) || 0) + 1);
+  normalizedCart.forEach(({ itemId, quantity }) => {
+    const key = String(itemId);
+    quantityMap.set(key, (quantityMap.get(key) || 0) + Number(quantity || 1));
   });
 
   return rows.map((item) => ({
     ...item,
-    quantity: quantityMap.get(String(item.id)) || quantityMap.get(item.id) || 0,
+    quantity: quantityMap.get(String(item.id)) || 0,
   }));
 };
 
-module.exports = { getItemBySlug, getAllItems, getCartItems };
+module.exports = { getItemBySlug, getAllItems, getCartItems, getItemById };

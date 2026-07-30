@@ -51,7 +51,7 @@
       container.appendChild(list);
     } catch (error) {
       console.error(error);
-      document.querySelector(".order-details").innerHTML = "<p>Unable to load order details.</p>";
+      toastr.error("Unable to load order details");
     }
   };
 
