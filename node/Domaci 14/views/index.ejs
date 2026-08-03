@@ -35,9 +35,12 @@
       const response = await fetch('/api/items');
       const items = await response.json();
       const itemsList = document.getElementById('items-list');
-
+      console.log(items);
       let html = '';
-      items.forEach((item) => {
+      if(items.length === 0) {
+        html = '<li class="page-empty">No items available at the moment. Please check back later.</li>';
+      } else {
+        items.forEach((item) => {
         html += `
           <li class="item-card">
             <div class="badge">${item.stock > 0 ? 'In stock' : 'Out of stock'}</div>
@@ -48,7 +51,7 @@
           </li>
         `;
       });
-
+      }
       itemsList.innerHTML = html;
     } catch (error) {
       console.error('Error fetching items:', error);

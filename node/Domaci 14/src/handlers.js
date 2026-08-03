@@ -6,6 +6,7 @@ const pool = require("../db/db");
 const { getAllItems, getCartItems, getItemById } = require("../services/product.service");
 const { registerUser, loginUser, getUserById } = require("../services/user.service");
 const { readJsonBody } = require("../helper/readJsonBody");
+const { validateLoginData } = require("../helper/user.validator");
 const {
   createSession,
   getSession,
@@ -15,12 +16,7 @@ const {
   clearCart,
   removeFromCart,
 } = require("../services/session.service");
-const {
-  successResponse,
-  successCreatedResponse,
-  unauthorizedResponse,
-  dbErrorResponse,
-} = require("../helper/apiResponseHelper");
+const { sendResponse } = require("../helper/apiResponseHelper");
 const { createOrder, getOrdersByUserId, getOrderById } = require("../services/order.service");
 
 const pageHandler = async (req, res, data = {}) => {
@@ -37,15 +33,13 @@ const pageHandler = async (req, res, data = {}) => {
     if (err) {
       console.error(err);
       res.writeHead(500, { "Content-Type": "text/html; charset=utf-8" });
-      res.write("<h1>Greška prilikom učitavanja stranice</h1>");
-      return res.end();
+      return res.end("<h1>Greška prilikom učitavanja stranice</h1>");
     }
     ejs.renderFile(layoutPath, { body: html, user: user }, (err, finalHtml) => {
       if (err) {
         console.error(err);
         res.writeHead(500, { "Content-Type": "text/html; charset=utf-8" });
-        res.write("<h1>Greška prilikom učitavanja stranice</h1>");
-        return res.end();
+        return res.end("<h1>Greška prilikom učitavanja stranice</h1>");
       }
       res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
       return res.end(finalHtml);
@@ -109,13 +103,11 @@ const apiHandler = async (req, res) => {
       if (userId) {
         const sessionId = createSession(userId);
         res.setHeader("Set-Cookie", `sessionId=${sessionId}; HttpOnly; Path=/; Max-Age=3600`);
-        return successCreatedResponse(res, { message: "User created successfully", userId });
+        return sendResponse(res, 201, { message: "User created successfully", userId });
       }
-      res.writeHead(500, { "Content-Type": "application/json" });
-      return res.end(JSON.stringify({ message: "Error creating user" }));
+      return sendResponse(res, 500, { message: "Error creating user" });
     } catch (error) {
-      res.writeHead(500, { "Content-Type": "application/json" });
-      return res.end(JSON.stringify({ message: error.message }));
+      return sendResponse(res, 500, { message: error.message });
     }
   } else if (req.url === "/api/login" && req.method === "POST") {
     let userData;
@@ -127,40 +119,34 @@ const apiHandler = async (req, res) => {
       return res.end(JSON.stringify({ message: "Invalid JSON body" }));
     }
     // validate data
-    if (!userData.email || !userData.password) {
+    const loginErrors = validateLoginData(userData);
+    if (loginErrors.length > 0) {
       res.writeHead(400, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ message: "Email and password are required" }));
-      return;
+      return res.end(JSON.stringify({ message: loginErrors[0] }));
     }
-    if (userData.password.length < 6) {
-      res.writeHead(400, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ message: "Password must be at least 6 characters long" }));
-      return;
-    }
+
     try {
       const userId = await loginUser(userData.email, userData.password);
       if (userId) {
         // create session and set cookie here if needed
         const sessionId = createSession(userId);
         res.setHeader("Set-Cookie", `sessionId=${sessionId}; HttpOnly; Path=/; Max-Age=3600`);
-        successResponse(res, { message: "Login successful", userId });
+        return sendResponse(res, 200, { message: "Login successful", userId });
       } else {
-        res.writeHead(401, { "Content-Type": "application/json" });
-        res.end(JSON.stringify({ message: "Invalid email or password" }));
+        return sendResponse(res, 401, { message: "Invalid email or password" });
       }
     } catch (dbError) {
       console.error("Database error during login:", dbError);
-      return dbErrorResponse(res);
+      return sendResponse(res, 500, { message: "Database error" });
     }
   } else if (req.url === "/api/logout" && req.method === "POST") {
     const sessionId = req.headers.cookie?.split("sessionId=")[1];
     if (sessionId) {
       const cookie = logoutSession(sessionId);
       res.setHeader("Set-Cookie", cookie);
-      return successResponse(res, { message: "Logged out successfully" });
+      return sendResponse(res, 200, { message: "Logged out successfully" });
     }
-    return unauthorizedResponse(res, "No active session found");
-    return res.end();
+    return sendResponse(res, 401, { message: "No active session found" });
   } else if (req.url === "/api/add-to-cart" && req.method === "POST") {
     const session = getSession(req);
     if (!session) {
@@ -178,8 +164,7 @@ const apiHandler = async (req, res) => {
       const quantityInCart = Number(cartItem?.quantity ?? 0);
 
       if (!itemId || typeof itemId !== "string") {
-        res.writeHead(400, { "Content-Type": "application/json" });
-        return res.end(JSON.stringify({ message: "Invalid item_id" }));
+        return sendResponse(res, 400, { message: "Invalid item_id" });
       }
       const actualItem = await getItemById(itemId);
       if (!actualItem) {
@@ -192,7 +177,7 @@ const apiHandler = async (req, res) => {
       }
       const succesfullyAdded = addToCart(session.sessionId, itemId);
       if (succesfullyAdded) {
-        return successResponse(res, { message: "Item added to cart" });
+        return sendResponse(res, 200, { message: "Item added to cart" });
       }
       res.writeHead(400, { "Content-Type": "application/json" });
       return res.end(JSON.stringify({ message: "Could not add item to cart" }));
@@ -201,31 +186,26 @@ const apiHandler = async (req, res) => {
       res.writeHead(400, { "Content-Type": "application/json" });
       return res.end(JSON.stringify({ message: "Invalid request body" }));
     }
-
-    res.writeHead(400, { "Content-Type": "application/json" });
     return res.end(JSON.stringify({ message: "Could not add item to cart" }));
   } else if (req.url === "/api/items" && req.method === "GET") {
     try {
       const items = await getAllItems();
-      successResponse(res, items);
+      return sendResponse(res, 200, items);
     } catch (dbError) {
       console.error("Database error loading items:", dbError);
-      return dbErrorResponse(res);
+      return sendResponse(res, 500, { message: "Database error" });
     }
   } else if (req.url === "/api/cart" && req.method === "GET") {
     const session = getSession(req);
     if (!session) {
-      res.writeHead(401, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ message: "Not authenticated" }));
-      return;
+      return sendResponse(res, 401, { message: "Not authenticated" });
     }
     const items = await getCartItems(session.shoppingCart);
-    successResponse(res, items);
+    return sendResponse(res, 200, items);
   } else if (req.url === "/api/remove-from-cart" && req.method === "POST") {
     const session = getSession(req);
     if (!session) {
-      res.writeHead(401, { "Content-Type": "application/json" });
-      return res.end(JSON.stringify({ message: "Not authenticated" }));
+      return sendResponse(res, 401, { message: "Not authenticated" });
     }
     let data;
     try {
@@ -251,64 +231,44 @@ const apiHandler = async (req, res) => {
       // }
       const succesfullyAdded = removeFromCart(session.sessionId, itemId);
       if (succesfullyAdded) {
-        return successResponse(res, { message: "Item removed from cart" });
+        return sendResponse(res, 200, { message: "Item removed from cart" });
       }
-      res.writeHead(400, { "Content-Type": "application/json" });
-      return res.end(JSON.stringify({ message: "Could not add item to cart" }));
+      return sendResponse(res, 400, { message: "Could not remove item from cart" });
     } catch (error) {
-      console.error("Error adding item to cart:", error);
-      res.writeHead(400, { "Content-Type": "application/json" });
-      return res.end(JSON.stringify({ message: "Invalid request body" }));
+      console.error("Error removing item from cart:", error);
+      return sendResponse(res, 400, { message: "Invalid request body" });
     }
-
-    res.writeHead(400, { "Content-Type": "application/json" });
-    return res.end(JSON.stringify({ message: "Could not add item to cart" }));
-  } else if (req.url === "/api/orders" && req.method === "GET") {
-    const session = getSession(req);
-    if (!session) {
-      res.writeHead(401, { "Content-Type": "application/json" });
-      return res.end(JSON.stringify({ message: "Not authenticated" }));
-    }
-
-    try {
-      const orders = await getOrdersByUserId(session.userId);
-      successResponse(res, orders);
-    } catch (error) {
-      console.error("Error fetching orders:", error);
-      return dbErrorResponse(res);
-    }
+    return sendResponse(res, 400, { message: "Could not remove item from cart" });
   } else if (req.url.startsWith("/api/order/") && req.method === "GET") {
     const session = getSession(req);
     if (!session) {
-      return unauthorizedResponse(res);
+      return sendResponse(res, 401, { message: "Not authenticated" });
     }
     const orderMatch = req.url.match(/^\/api\/order\/([0-9]+)$/);
     const orderId = orderMatch ? orderMatch[1] : null;
 
     if (!orderId) {
-      res.writeHead(400, { "Content-Type": "application/json" });
-      return res.end(JSON.stringify({ message: "Missing order id" }));
+      return sendResponse(res, 400, { message: "Missing order id" });
     }
 
     try {
       const order = await getOrderById(session.userId, orderId);
-      return successResponse(res, order);
+      return sendResponse(res, 200, order);
     } catch (error) {
       console.error("Error fetching order details:", error);
-      return dbErrorResponse(res);
+      return sendResponse(res, 500, { message: "Database error" });
     }
   } else if (req.url === "/api/checkout" && req.method === "POST") {
     const session = getSession(req);
     if (!session) {
-      return unauthorizedResponse(res);
+      return sendResponse(res, 401, { message: "No active session found" });
     }
     let data;
     try {
       data = await readJsonBody(req);
       const cartItems = await getCartItems(session.shoppingCart || []);
       if (cartItems == []) {
-        res.writeHead(400, { "Content-Type": "application/json" });
-        return res.end(JSON.stringify({ message: "Please add items to cart." }));
+        return sendResponse(res, 400, { message: "Please add items to cart." });
       }
       const total = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
@@ -318,28 +278,25 @@ const apiHandler = async (req, res) => {
 
       const orderResult = await createOrder(data);
       clearCart(session.sessionId);
-      return successResponse(res, orderResult);
+      return sendResponse(res, 201, orderResult);
     } catch (error) {
       console.error("Error creating order:", error);
-      res.writeHead(400, { "Content-Type": "application/json" });
-      return res.end(JSON.stringify({ message: "Invalid request body" }));
+      return sendResponse(res, 400, { message: "Invalid request body" });
     }
   } else if (req.url === "/api/orders" && req.method === "GET") {
     const session = getSession(req);
     if (!session) {
-      return unauthorizedResponse(res);
+      return sendResponse(res, 401, { message: "No active session found" });
     }
     try {
-      const data = await readJsonBody(req);
       const orders = await getOrdersByUserId(session.userId);
-      return successResponse(res, orders);
+      return sendResponse(res, 200, orders);
     } catch (error) {
       console.error("Error fetching orders:", error);
-      return dbErrorResponse(res);
+      return sendResponse(res, 500, { message: "Database error" });
     }
   } else {
-    res.writeHead(404, { "Content-Type": "application/json" });
-    res.end(JSON.stringify({ message: "API endpoint not found" }));
+    return sendResponse(res, 404, { message: "API endpoint not found" });
   }
 };
 
