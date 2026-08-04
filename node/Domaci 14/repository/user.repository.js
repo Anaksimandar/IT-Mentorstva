@@ -16,23 +16,7 @@ const findUserByEmail = async (email) => {
   return user[0]; // Return the user object if found, otherwise undefined
 };
 
-const loginUser = async (email, password) => {
-  try {
-    const user = await findUserByEmail(email);
-    if (!user) {
-      return null; // No user found with the provided email
-    }
-    const isPasswordSame = await bcrypt.compare(password, user.password);
-    if (!isPasswordSame) {
-      return null; // Password does not match
-    }
-    return user.id; // Return the user ID so callers can use it
-  } catch (error) {
-    throw error;
-  }
-};
-
-const registerUser = async (userData) => {
+const insertUser = async (userData) => {
   const { name, email, password } = userData;
   const userExists = await findUserByEmail(email);
   if (userExists) {
@@ -58,7 +42,7 @@ const findUserById = async (userId) => {
 
 module.exports = {
   findAllUsers,
-  registerUser,
-  loginUser,
+  insertUser,
   findUserById,
+  findUserByEmail,
 };

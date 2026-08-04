@@ -4,9 +4,8 @@ const querystring = require("querystring");
 const ejs = require("ejs");
 const pool = require("../db/db");
 const { findAllItems, findCartItems, getItemById } = require("../repository/product.repository");
-const { registerUser, loginUser, findUserById } = require("../repository/user.repository");
+const { registerUser, loginUser } = require("../services/user.service");
 const { readJsonBody } = require("../helper/readJsonBody");
-const { validateLoginData } = require("../helper/user.validator");
 const {
   insertSession,
   findSession,
@@ -18,6 +17,7 @@ const {
 const { sendResponse } = require("../helper/apiResponseHelper");
 const { findOrdersByUserId, findOrderById } = require("../repository/order.repository");
 const { addItemToCart, removeItemFromCart, createOrder } = require("../services/cart.service");
+const { findUserById } = require("../repository/user.repository");
 
 const pageHandler = async (req, res, data = {}) => {
   const pageName = data.pageName || (req.url === "/" ? "index" : req.url.slice(1));
@@ -77,27 +77,7 @@ const apiHandler = async (req, res) => {
       res.writeHead(400, { "Content-Type": "application/json" });
       return res.end(JSON.stringify({ message: "Invalid JSON body" }));
     }
-    // validate data
-    if (!userData.name || !userData.email || !userData.password || !userData.confirmPassword) {
-      res.writeHead(400, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ message: "All fields are required" }));
-      return;
-    }
-    if (userData.name.length < 3) {
-      res.writeHead(400, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ message: "Name must be at least 3 characters long" }));
-      return;
-    }
-    if (userData.password.length < 6) {
-      res.writeHead(400, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ message: "Password must be at least 6 characters long" }));
-      return;
-    }
-    if (userData.password !== userData.confirmPassword) {
-      res.writeHead(400, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ message: "Passwords do not match" }));
-      return;
-    }
+
     try {
       const userId = await registerUser(userData);
       if (userId) {
@@ -115,18 +95,11 @@ const apiHandler = async (req, res) => {
       userData = await readJsonBody(req);
     } catch (error) {
       console.error("Error reading JSON body:", error);
-      res.writeHead(400, { "Content-Type": "application/json" });
-      return res.end(JSON.stringify({ message: "Invalid JSON body" }));
-    }
-    // validate data
-    const loginErrors = validateLoginData(userData);
-    if (loginErrors.length > 0) {
-      res.writeHead(400, { "Content-Type": "application/json" });
-      return res.end(JSON.stringify({ message: loginErrors[0] }));
+      return sendResponse(res, 400, { message: "Invalid JSON body" });
     }
 
     try {
-      const userId = await loginUser(userData.email, userData.password);
+      const userId = await loginUser(userData);
       if (userId) {
         // create session and set cookie here if needed
         const sessionId = insertSession(userId);
