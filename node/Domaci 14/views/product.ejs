@@ -56,7 +56,8 @@
       if (!response.ok) {
         throw new Error(data.message || 'Failed to add item to cart');
       }
-      toastr.success('Item added to cart');
+      console.log(response);
+      toastr.success(response.message || 'Item added succesfully');
     } catch (error) {
       toastr.error(error);
     }

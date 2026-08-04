@@ -1,8 +1,8 @@
 const http = require("http");
 const ejs = require("ejs");
 const { pageHandler, staticHandler, apiHandler } = require("./src/handlers");
-const { getItemBySlug, getCartItems } = require("./services/product.service");
-const { getSession, getCartItemsIds } = require("./services/session.service");
+const { findItemBySlug, findCartItems } = require("./repository/product.repository");
+const { findSession, findCartItemsIds } = require("./repository/session.repository");
 
 const server = http.createServer(async (req, res) => {
   if (req.url.startsWith("/api")) {
@@ -28,24 +28,24 @@ const server = http.createServer(async (req, res) => {
       pageHandler(req, res, { pageName: "login" });
       return;
     } else if (req.url === "/checkout" && req.method === "POST") {
-      const userSession = getSession(req);
+      const userSession = findSession(req);
       if (!userSession) {
         res.writeHead(302, { Location: "/login" });
         return res.end();
       }
       apiHandler(req, res);
     } else if (req.url === "/checkout" && req.method === "GET") {
-      const userSession = getSession(req);
+      const userSession = findSession(req);
       if (!userSession) {
         res.writeHead(302, { Location: "/login" });
         return res.end();
       }
-      const cartItems = await getCartItems(userSession.shoppingCart || []);
+      const cartItems = await findCartItems(userSession.shoppingCart || []);
       const total = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
       pageHandler(req, res, { pageName: "checkout", cartItems, total });
       return;
     } else if (req.url === "/orders" && req.method === "GET") {
-      const userSession = getSession(req);
+      const userSession = findSession(req);
       if (!userSession) {
         res.writeHead(302, { Location: "/login" });
         return res.end();
@@ -56,7 +56,7 @@ const server = http.createServer(async (req, res) => {
 
   const orderMatch = req.url.match(/^\/order?\/([0-9]+)$/);
   if (orderMatch) {
-    const userSession = getSession(req);
+    const userSession = findSession(req);
     if (!userSession) {
       res.writeHead(302, { Location: "/login" });
       return res.end();
@@ -74,7 +74,7 @@ const server = http.createServer(async (req, res) => {
   const productMatch = req.url.match(/^\/product\/([a-z0-9-]+)$/);
   if (productMatch) {
     const productName = productMatch[1];
-    const item = await getItemBySlug(productName);
+    const item = await findItemBySlug(productName);
     if (item) {
       pageHandler(req, res, { item, pageName: "product" });
       return;

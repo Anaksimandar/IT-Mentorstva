@@ -1,6 +1,6 @@
 const db = require("../db/db");
 
-const createOrder = async (orderData) => {
+const insertOrder = async (orderData) => {
   const connection = await db.getConnection();
 
   try {
@@ -54,7 +54,7 @@ const createOrder = async (orderData) => {
   }
 };
 
-const getOrdersByUserId = async (userId) => {
+const findOrdersByUserId = async (userId) => {
   const connection = await db.getConnection();
 
   try {
@@ -65,7 +65,7 @@ const getOrdersByUserId = async (userId) => {
   }
 };
 
-const getOrderById = async (userId, orderId) => {
+const findOrderById = async (userId, orderId) => {
   console.log("Fetching order details for userId:", userId, "orderId:", orderId);
   const connection = await db.getConnection();
   try {
@@ -84,4 +84,4 @@ const getOrderById = async (userId, orderId) => {
   }
 };
 
-module.exports = { createOrder, getOrdersByUserId, getOrderById };
+module.exports = { insertOrder, findOrdersByUserId, findOrderById };

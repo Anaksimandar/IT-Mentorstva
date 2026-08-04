@@ -1,17 +1,17 @@
 const db = require("../db/db.js");
 
-const getItemBySlug = async (itemSlug) => {
+const findItemBySlug = async (itemSlug) => {
   const [rows] = await db.query("SELECT * FROM items WHERE slug = ? LIMIT 1", [itemSlug]);
 
   return rows[0];
 };
 
-const getAllItems = async () => {
+const findAllItems = async () => {
   const [rows] = await db.query("SELECT * FROM items");
   return rows;
 };
 
-const getItemById = async (itemId) => {
+const findItemById = async (itemId) => {
   const [rows] = await db.query("SELECT * FROM items WHERE id = ? LIMIT 1", [itemId]);
   return rows[0];
 };
@@ -39,7 +39,7 @@ const normalizeCartItems = (cartItems = []) => {
   }, []);
 };
 
-const getCartItems = async (cartItems) => {
+const findCartItems = async (cartItems) => {
   const normalizedCart = normalizeCartItems(cartItems);
   if (normalizedCart.length === 0) return [];
 
@@ -61,4 +61,4 @@ const getCartItems = async (cartItems) => {
   }));
 };
 
-module.exports = { getItemBySlug, getAllItems, getCartItems, getItemById };
+module.exports = { findItemBySlug, findAllItems, findCartItems, findItemById };

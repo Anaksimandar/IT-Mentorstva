@@ -33,7 +33,7 @@ const normalizeCartItems = (cartItems = []) => {
   }, []);
 };
 
-const createSession = (userId) => {
+const insertSession = (userId) => {
   const sessionId = crypto.randomBytes(16).toString("hex");
   const session = { userId, createdAt: Date.now(), shoppingCart: [] };
   sessions[sessionId] = session;
@@ -41,7 +41,7 @@ const createSession = (userId) => {
   return sessionId;
 };
 
-const addToCart = (sessionId, itemId) => {
+const insertItemToCart = (sessionId, itemId) => {
   const session = sessions[sessionId];
 
   if (!session) {
@@ -61,7 +61,7 @@ const addToCart = (sessionId, itemId) => {
   return true;
 };
 
-const removeFromCart = (sessionId, itemId) => {
+const deleteItemFromCart = (sessionId, itemId) => {
   const session = sessions[sessionId];
 
   if (!session) {
@@ -83,7 +83,7 @@ const removeFromCart = (sessionId, itemId) => {
   return true;
 };
 
-const clearCart = (sessionId) => {
+const deleteCart = (sessionId) => {
   const session = sessions[sessionId];
 
   if (!session) {
@@ -135,7 +135,7 @@ const saveSessions = (sessions) => {
   }
 };
 
-const getSessionId = (req) => {
+const findSessionId = (req) => {
   const cookieHeader = req?.headers.cookie;
   if (!cookieHeader) {
     return null;
@@ -145,8 +145,8 @@ const getSessionId = (req) => {
   return match ? match[1] : null;
 };
 
-const getSession = (req) => {
-  const sessionId = getSessionId(req);
+const findSession = (req) => {
+  const sessionId = findSessionId(req);
   if (!sessionId) {
     return null;
   }
@@ -168,8 +168,8 @@ const getSession = (req) => {
   return { ...session, sessionId, shoppingCart: normalizedCart };
 };
 
-const getCartItemsIds = (req) => {
-  const session = getSession(req);
+const findCartItemsIds = (req) => {
+  const session = findSession(req);
 
   if (!session) return [];
 
@@ -179,15 +179,15 @@ const getCartItemsIds = (req) => {
 const sessions = loadSessions();
 
 module.exports = {
-  createSession,
+  insertSession,
   loadSessions,
   sessions,
   isUserLoggedIn,
-  getSession,
-  getSessionId,
+  findSession,
+  findSessionId,
   logoutSession,
-  addToCart,
-  clearCart,
-  getCartItemsIds,
-  removeFromCart,
+  insertItemToCart,
+  deleteCart,
+  findCartItemsIds,
+  deleteItemFromCart,
 };
