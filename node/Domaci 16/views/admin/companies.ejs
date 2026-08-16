@@ -1,0 +1,20 @@
+<h1>Companies</h1>
+<% if (companies.length === 0) { %>
+  <p>No companies found.</p>
+<% } else { %>
+    <% for (let i = 0; i < companies.length; i++) { %>
+      <div class="company">
+        <h2><%= companies[i].name %></h2>
+        <form action="/admin/company/remove" method="get">
+          <input type="hidden" name="id" value="<%= companies[i].id %>" />
+          <button type="submit">Delete</button>
+        </form>
+      </div>
+    <% } %>
+<% } %>
+
+
+<form action="/admin/company/add" method="POST">
+  <button type="submit">Add</button>
+  <input type="text" name="name" placeholder="Company name" />
+</form>

@@ -1,0 +1,157 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family:
+    system-ui,
+    -apple-system,
+    "Segoe UI",
+    Roboto,
+    sans-serif;
+  background: #f4f5f7;
+  color: #1f2937;
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+  line-height: 1.5;
+}
+
+h1 {
+  font-size: 1.75rem;
+  margin-bottom: 1.5rem;
+}
+
+/* Job cards */
+.job {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 1rem;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.job h2 {
+  margin: 0 0 0.5rem;
+  font-size: 1.25rem;
+  color: #111827;
+}
+
+.job p {
+  margin: 0.25rem 0;
+  font-size: 0.95rem;
+}
+
+.job p strong {
+  color: #374151;
+}
+
+.technologies {
+  margin: 0.75rem 0;
+}
+
+.tag {
+  display: inline-block;
+  background: #e0e7ff;
+  color: #3730a3;
+  font-size: 0.8rem;
+  font-weight: 500;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  margin: 0.15rem 0.25rem 0.15rem 0;
+}
+
+/* Delete button */
+.job form[action="/admin/job/remove"] {
+  margin-top: 0.75rem;
+}
+
+.job form[action="/admin/job/remove"] button {
+  background: #fee2e2;
+  color: #b91c1c;
+  border: none;
+  padding: 0.4rem 0.9rem;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.job form[action="/admin/job/remove"] button:hover {
+  background: #fecaca;
+}
+
+/* Create job form */
+form[action="/admin/job/create"] {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-top: 2rem;
+}
+
+form[action="/admin/job/create"] > div {
+  margin-bottom: 1rem;
+}
+
+form[action="/admin/job/create"] label {
+  display: block;
+  font-weight: 600;
+  font-size: 0.9rem;
+  margin-bottom: 0.35rem;
+  color: #374151;
+}
+
+form[action="/admin/job/create"] select,
+form[action="/admin/job/create"] input[type="text"],
+form[action="/admin/job/create"] input[type="number"],
+form[action="/admin/job/create"] input[type="date"] {
+  width: 100%;
+  padding: 0.5rem 0.65rem;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  background: #fff;
+}
+
+form[action="/admin/job/create"] select:focus,
+form[action="/admin/job/create"] input:focus {
+  outline: none;
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+}
+
+/* Technologies checkbox list */
+form[action="/admin/job/create"] div:has(> label[for^="tech-"]) {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-bottom: 0.4rem;
+}
+
+form[action="/admin/job/create"] input[type="checkbox"] {
+  width: auto;
+  accent-color: #6366f1;
+}
+
+/* Submit button */
+form[action="/admin/job/create"] button[type="submit"] {
+  background: #4f46e5;
+  color: #fff;
+  border: none;
+  padding: 0.6rem 1.5rem;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+form[action="/admin/job/create"] button[type="submit"]:hover {
+  background: #4338ca;
+}
+
+.error-item {
+  color: red;
+}
