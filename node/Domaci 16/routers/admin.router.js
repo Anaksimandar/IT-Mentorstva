@@ -12,5 +12,6 @@ router.get("/company/remove", authMiddleware.admin, adminController.deleteCompan
 router.get("/jobs", authMiddleware.admin, adminController.showJobs);
 router.post("/job/create", authMiddleware.admin, createJobValidation, adminController.addJob);
 router.get("/jobs/search", authMiddleware.admin, adminController.searchJobs);
+router.get("/job/remove", authMiddleware.admin, adminController.deleteJob);
 
 module.exports = router;

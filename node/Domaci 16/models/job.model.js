@@ -67,6 +67,7 @@ const Job = {
     `,
       [jobIds],
     );
+    console.log(techRows);
 
     return job_ads.map((job) => ({
       id: job.id,
@@ -81,7 +82,7 @@ const Job = {
         .map((t) => ({ id: t.id, name: t.name })),
     }));
   },
-  search: async ({ title, minSalary, maxSalary } = {}) => {
+  search: async ({ title, minSalary, maxSalary, dueDate, technology } = {}) => {
     const conditions = [];
     const params = [];
 
@@ -103,10 +104,41 @@ const Job = {
       conditions.push("job_ads.salary <= ?");
       params.push(Number(normalizedMaxSalary));
     }
+    if (dueDate) {
+      const parsedDueDate = new Date(dueDate);
+      if (!isNaN(parsedDueDate.getTime())) {
+        conditions.push("DATE(job_ads.due_date) = ?");
+        params.push(dueDate); // raw string, e.g. "2026-08-28"
+      }
+    }
+    if (technology) {
+      const data = await Job.getAllByTechnology(technology);
+      const jobIds = data.map((job) => job.job_id);
+
+      if (jobIds.length === 0) {
+        // Technology exists but no jobs use it
+        conditions.push("1 = 0");
+      } else {
+        const placeholders = jobIds.map(() => "?").join(", ");
+
+        conditions.push(`job_ads.id IN (${placeholders})`);
+        params.push(...jobIds);
+      }
+    }
 
     const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
     console.log({ whereClause, params });
     return Job.getAll(whereClause, params);
+  },
+  delete: async (id) => {
+    const [rows] = await db.query(`DELETE FROM job_ads WHERE id = ?`, [id]);
+    return rows.affectedRows;
+  },
+  getAllByTechnology: async (technologyId) => {
+    const [rows] = await db.query("SELECT job_id FROM job_technologies WHERE technology_id = ?", [
+      technologyId,
+    ]);
+    return rows;
   },
 };
 

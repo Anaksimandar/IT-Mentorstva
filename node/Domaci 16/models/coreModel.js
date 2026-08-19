@@ -7,6 +7,7 @@ const CoreModel = {
   },
   deleteById: async (tableName, id) => {
     const [rows] = await db.query("DELETE FROM " + tableName + " WHERE id = " + id);
+    return rows.affectedRows;
   },
 };
 

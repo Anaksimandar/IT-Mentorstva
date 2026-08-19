@@ -8,11 +8,13 @@ const homeRouter = require("./routers/home.router");
 const authRouter = require("./routers/auth.router");
 const adminRouter = require("./routers/admin.router");
 const path = require("path");
+const expressLayout = require("express-ejs-layouts");
+require("dotenv").config();
 
 app.use(
   session({
     store: new FileStore(),
-    secret: "1234567890", // Replace with a strong secret in production
+    secret: process.env.SESSION_SECRET, // Replace with a strong secret in production
     resave: false,
     saveUninitialized: false,
     cookie: {
@@ -28,6 +30,8 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, "public")));
 app.set("view engine", "ejs");
 app.set("views", __dirname + "/views");
+app.use(expressLayout);
+app.set("layout", "index");
 
 app.use("/user", userRouter);
 app.use("/", homeRouter);
@@ -38,7 +42,7 @@ app.get("/product", (req, res) => {
 });
 
 app.get("/", (req, res) => {
-  res.render("index");
+  res.render("home");
 });
 
 app.listen(3000, () => {

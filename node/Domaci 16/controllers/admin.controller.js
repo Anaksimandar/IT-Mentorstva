@@ -60,6 +60,7 @@ module.exports = {
       if (affectedRows > 0) {
         return res.redirect("/admin/technologies"); // Redirect to the companies page after adding
       }
+      console.error();
       return res.status(500).send("Error removing technology");
     } catch (err) {
       console.error(err);
@@ -74,7 +75,7 @@ module.exports = {
     try {
       const affectedRows = await CoreModel.deleteById(Company.tableName, id);
       if (affectedRows > 0) {
-        return res.redirect("/admin/technologies"); // Redirect to the companies page after adding
+        return res.redirect("/admin/companies"); // Redirect to the companies page after adding
       }
       return res.status(500).send("Error removing company");
     } catch (err) {
@@ -97,7 +98,7 @@ module.exports = {
   },
   addJob: async (req, res) => {
     const users = await CoreModel.getAll(User.tableName);
-    const technologies = await CoreModel.getAll(Technology.tableName);
+    const technologiesList = await CoreModel.getAll(Technology.tableName);
     const companies = await CoreModel.getAll(Company.tableName);
     const jobs = await Jobs.getAll();
 
@@ -106,20 +107,21 @@ module.exports = {
     if (!errors.isEmpty()) {
       return res.render("admin/jobs", {
         users: users,
-        technologies: technologies,
+        technologies: technologiesList,
         companies: companies,
         jobs: jobs,
         errors: errors.array(),
       });
     }
 
-    const { userId, companyId, technologiesIdArray, title, description, salary, due_date } =
-      req.body;
+    const { userId, companyId, technologies, title, description, salary, due_date } = req.body;
+    console.log(req.body);
+
     try {
       const jobId = await Jobs.create(
         userId,
         companyId,
-        technologiesIdArray,
+        technologies,
         title,
         description,
         salary,
@@ -131,7 +133,6 @@ module.exports = {
     }
   },
   searchJobs: async (req, res) => {
-    const { title, minSalary, maxSalary } = req.query;
     console.log(req.query);
     try {
       return res.render("admin/jobs", {
@@ -143,6 +144,25 @@ module.exports = {
     } catch (err) {
       console.error(err);
       return res.status(500).send("Error preparing jobs panel");
+    }
+  },
+  deleteJob: async (req, res) => {
+    const { id } = req.query;
+    try {
+      const rowsAffected = await Jobs.delete(id);
+      return res.render("admin/jobs", {
+        users: await CoreModel.getAll(User.tableName),
+        technologies: await CoreModel.getAll(Technology.tableName),
+        companies: await CoreModel.getAll(Company.tableName),
+        jobs: await Jobs.getAll(),
+      });
+
+      if (rowsAffected > 0) {
+        return res.render("admin/jobs");
+      }
+    } catch (err) {
+      console.error(err);
+      return res.status(500).send("Error deleting job.");
     }
   },
 };
