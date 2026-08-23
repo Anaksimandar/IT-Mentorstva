@@ -17,10 +17,14 @@ const Job = {
       const jobId = jobResult.insertId;
 
       // 2. Insert into job_technologies (only if there are any)
-      const techArray = Array.isArray(technologies) ? technologies : [technologies];
-
-      if (techArray.length > 0 && techArray[0] !== undefined) {
+      const techArray = (Array.isArray(technologies) ? technologies : [technologies]).filter(
+        Boolean,
+      );
+      if (techArray.length > 0) {
         const values = techArray.map((techId) => [jobId, techId]);
+        await connection.query("INSERT INTO job_technologies (job_id, technology_id) VALUES ?", [
+          values,
+        ]);
 
         await connection.query("INSERT INTO job_technologies (job_id, technology_id) VALUES ?", [
           values,

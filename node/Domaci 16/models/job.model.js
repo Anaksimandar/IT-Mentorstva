@@ -38,18 +38,18 @@ const Job = {
       connection.release(); // always return the connection to the pool
     }
   },
-  getAll: async (whereClause = "", params = []) => {
+  getAll: async (whereClause = "", params = [], orderClause = "ORDER BY job_ads.due_date ASC") => {
     const [job_ads] = await db.query(
       `
         SELECT
-          job_ads.id, job_ads.title, job_ads.description, job_ads.salary, job_ads.due_date,
+          job_ads.id, job_ads.title, job_ads.description, job_ads.views, job_ads.salary, job_ads.due_date,
           users.id AS user_id, users.name AS user_name,
           companies.id AS company_id, companies.name AS company_name
         FROM job_ads
         JOIN users ON users.id = job_ads.user_id
         JOIN companies ON companies.id = job_ads.company_id
         ${whereClause}
-        ORDER BY job_ads.due_date ASC
+        ${orderClause}
      `,
       params,
     );
@@ -67,7 +67,6 @@ const Job = {
     `,
       [jobIds],
     );
-    console.log(techRows);
 
     return job_ads.map((job) => ({
       id: job.id,
@@ -75,12 +74,49 @@ const Job = {
       description: job.description,
       salary: job.salary,
       due_date: job.due_date,
+      views: job.views,
       user: { id: job.user_id, name: job.user_name },
       company: { id: job.company_id, name: job.company_name },
       technologies: techRows
         .filter((t) => t.job_id === job.id)
         .map((t) => ({ id: t.id, name: t.name })),
     }));
+  },
+  userSearch: async ({ title, technology, sortBy } = {}) => {
+    const conditions = [];
+    const params = [];
+
+    const normalizedTitle = typeof title === "string" ? title.trim() : "";
+
+    if (normalizedTitle) {
+      conditions.push("job_ads.title LIKE ?");
+      params.push(`%${normalizedTitle}%`);
+    }
+
+    if (technology) {
+      const data = await Job.getAllByTechnology(technology);
+      const jobIds = data.map((job) => job.job_id);
+
+      if (jobIds.length === 0) {
+        conditions.push("1 = 0");
+      } else {
+        const placeholders = jobIds.map(() => "?").join(", ");
+        conditions.push(`job_ads.id IN (${placeholders})`);
+        params.push(...jobIds);
+      }
+    }
+
+    const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
+
+    // Whitelist allowed sort options — NEVER interpolate sortBy directly into SQL
+    const sortOptions = {
+      ascending: "ORDER BY job_ads.views ASC",
+      descending: "ORDER BY job_ads.views DESC",
+      oldest: "ORDER BY job_ads.due_date ASC",
+    };
+    const orderClause = sortOptions[sortBy] || sortOptions.oldest; // sensible default
+
+    return Job.getAll(whereClause, params, orderClause);
   },
   search: async ({ title, minSalary, maxSalary, dueDate, technology } = {}) => {
     const conditions = [];
@@ -139,6 +175,9 @@ const Job = {
       technologyId,
     ]);
     return rows;
+  },
+  incrementViews: async (jobId) => {
+    await db.query(`UPDATE job_ads SET views = views + 1 WHERE id = ?`, [jobId]);
   },
 };
 

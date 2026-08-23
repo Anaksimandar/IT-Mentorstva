@@ -2,6 +2,8 @@ const Company = require("../models/company.model");
 const Technology = require("../models/technology.model");
 const User = require("../models/user.model");
 const Jobs = require("../models/job.model");
+const { validationResult } = require("express-validator");
+
 module.exports = {
   showCompanies: async (req, res) => {
     try {

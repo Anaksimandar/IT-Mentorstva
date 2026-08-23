@@ -47,8 +47,10 @@
           <% }) %>
         <% } %>
       </div>
-
-      <form action="/admin/job/remove" method="GET">
+      <form action="/jobs/<%= job.id %>" method="GET">
+          <button id="getJobByIdBtn" type="submit">See more</button>
+      </form>
+      <form action="/admin/jobs/remove" method="GET">
         <input type="hidden" name="id" value="<%= job.id %>" />
         <button type="submit">Delete</button>
       </form>
@@ -56,7 +58,7 @@
   <% }) %>
 <% } %>
 
-<form action="/admin/job/create" method="post">
+<form action="/admin/jobs/create" method="post">
   <div>
     <label for="userId">Users</label>
     <select name="userId" id="userId">

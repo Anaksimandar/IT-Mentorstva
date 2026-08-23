@@ -5,7 +5,7 @@
     <% for (let i = 0; i < technologies.length; i++) { %>
       <div class="technology">
         <h2><%= technologies[i].name %></h2>
-        <form action="/admin/technology/remove" method="get">
+        <form action="/admin/technologies/remove" method="get">
           <input type="hidden" name="id" value="<%= technologies[i].id %>" />
           <button type="submit">Delete</button>
         </form>
@@ -14,7 +14,7 @@
 <% } %>
 
 
-<form action="/admin/technology/add" method="POST">
+<form action="/admin/technologies/add" method="POST">
   <button type="submit">Add</button>
   <input type="text" name="name" placeholder="Technology name" />
 </form>

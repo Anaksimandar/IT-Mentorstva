@@ -1,14 +1,19 @@
 const express = require("express");
 const app = express();
-const userRouter = require("./routers/user.router");
+const jobRouter = require("./routers/job.router");
 const ejs = require("ejs");
 const session = require("express-session");
 const FileStore = require("session-file-store")(session);
 const homeRouter = require("./routers/home.router");
 const authRouter = require("./routers/auth.router");
-const adminRouter = require("./routers/admin.router");
+const adminJobsRouter = require("./routers/adminJobs.router");
 const path = require("path");
 const expressLayout = require("express-ejs-layouts");
+const companyRouter = require("./routers/company.router");
+const technologyRouter = require("./routers/technology.router");
+const currentUserMiddlewere = require("./middlewares/currentUser.middleware");
+const userJobsRouter = require("./routers/userJobs.router");
+
 require("dotenv").config();
 
 app.use(
@@ -33,10 +38,13 @@ app.set("views", __dirname + "/views");
 app.use(expressLayout);
 app.set("layout", "index");
 
-app.use("/user", userRouter);
+app.use(currentUserMiddlewere);
 app.use("/", homeRouter);
 app.use("/auth", authRouter);
-app.use("/admin", adminRouter);
+app.use("/admin/companies", companyRouter);
+app.use("/admin/technologies", technologyRouter);
+app.use("/jobs", userJobsRouter);
+app.use("/admin/jobs", adminJobsRouter);
 app.get("/product", (req, res) => {
   res.send("Retrieving all products");
 });

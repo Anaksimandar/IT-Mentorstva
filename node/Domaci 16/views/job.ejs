@@ -1,0 +1,41 @@
+<h1>Job info</h1>
+
+  <main class="job-detail-container">
+    <span class="badge views">👁 <%= job.views %> views</span>
+    <div class="job-detail-header">
+      <h1><%= job.title %></h1>
+    </div>
+
+    <div class="job-detail-meta">
+      <span class="badge salary">$<%= job.salary %></span>
+      <span class="badge due-date">
+        Due: <%= new Date(job.due_date).toLocaleDateString() %>
+      </span>
+    </div>
+
+    <section class="job-detail-section">
+      <h2>Description</h2>
+      <p><%= job.description %></p>
+    </section>
+
+    <section class="job-detail-section">
+      <h2>Technologies</h2>
+      <% if (job.technologies && job.technologies.length > 0) { %>
+        <ul class="tech-list">
+          <% job.technologies.forEach(tech => { %>
+            <li class="tech-tag"><%= tech.name %></li>
+          <% }) %>
+        </ul>
+      <% } else { %>
+        <p>No technologies listed.</p>
+      <% } %>
+    </section>
+
+    <section class="job-detail-section">
+      <h2>Posted by</h2>
+      <p><%= job.user.name %></p>
+    </section>
+  </main>
+
+</body>
+</html>

@@ -63,11 +63,12 @@ h1 {
 }
 
 /* Delete button */
-.job form[action="/admin/job/remove"] {
+.job form[action="/admin/jobs/remove"] {
   margin-top: 0.75rem;
 }
 
-.job form[action="/admin/job/remove"] button {
+.job form[action="/admin/jobs/remove"] button,
+#getJobByIdBtn {
   background: #fee2e2;
   color: #b91c1c;
   border: none;
@@ -78,12 +79,17 @@ h1 {
   transition: background 0.15s ease;
 }
 
-.job form[action="/admin/job/remove"] button:hover {
+#getJobByIdBtn {
+  color: white;
+  background-color: #4f46e5;
+}
+
+.job form[action="/admin/jobs/remove"] button:hover {
   background: #fecaca;
 }
 
 /* Create job form */
-form[action="/admin/job/create"] {
+form[action="/admin/jobs/create"] {
   background: #fff;
   border: 1px solid #e5e7eb;
   border-radius: 8px;
@@ -91,11 +97,11 @@ form[action="/admin/job/create"] {
   margin-top: 2rem;
 }
 
-form[action="/admin/job/create"] > div {
+form[action="/admin/jobs/create"] > div {
   margin-bottom: 1rem;
 }
 
-form[action="/admin/job/create"] label {
+form[action="/admin/jobs/create"] label {
   display: block;
   font-weight: 600;
   font-size: 0.9rem;
@@ -103,10 +109,10 @@ form[action="/admin/job/create"] label {
   color: #374151;
 }
 
-form[action="/admin/job/create"] select,
-form[action="/admin/job/create"] input[type="text"],
-form[action="/admin/job/create"] input[type="number"],
-form[action="/admin/job/create"] input[type="date"] {
+form[action="/admin/jobs/create"] select,
+form[action="/admin/jobs/create"] input[type="text"],
+form[action="/admin/jobs/create"] input[type="number"],
+form[action="/admin/jobs/create"] input[type="date"] {
   width: 100%;
   padding: 0.5rem 0.65rem;
   border: 1px solid #d1d5db;
@@ -115,28 +121,28 @@ form[action="/admin/job/create"] input[type="date"] {
   background: #fff;
 }
 
-form[action="/admin/job/create"] select:focus,
-form[action="/admin/job/create"] input:focus {
+form[action="/admin/jobs/create"] select:focus,
+form[action="/admin/jobs/create"] input:focus {
   outline: none;
   border-color: #6366f1;
   box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
 }
 
 /* Technologies checkbox list */
-form[action="/admin/job/create"] div:has(> label[for^="tech-"]) {
+form[action="/admin/jobs/create"] div:has(> label[for^="tech-"]) {
   display: flex;
   align-items: center;
   gap: 0.4rem;
   margin-bottom: 0.4rem;
 }
 
-form[action="/admin/job/create"] input[type="checkbox"] {
+form[action="/admin/jobs/create"] input[type="checkbox"] {
   width: auto;
   accent-color: #6366f1;
 }
 
 /* Submit button */
-form[action="/admin/job/create"] button[type="submit"] {
+form[action="/admin/jobs/create"] button[type="submit"] {
   background: #4f46e5;
   color: #fff;
   border: none;
@@ -148,7 +154,7 @@ form[action="/admin/job/create"] button[type="submit"] {
   transition: background 0.15s ease;
 }
 
-form[action="/admin/job/create"] button[type="submit"]:hover {
+form[action="/admin/jobs/create"] button[type="submit"]:hover {
   background: #4338ca;
 }
 
@@ -170,6 +176,7 @@ form[action="/admin/jobs/search"] {
 
 form[action="/admin/jobs/search"] input[type="text"],
 form[action="/admin/jobs/search"] input[type="number"],
+form[action="/admin/jobs/search"] select,
 form[action="/admin/jobs/search"] input[type="date"] {
   padding: 0.5rem 0.65rem;
   border: 1px solid #d1d5db;
@@ -197,7 +204,8 @@ form[action="/admin/jobs/search"] label {
   color: #374151;
 }
 
-form[action="/admin/jobs/search"] button[type="submit"] {
+form[action="/admin/jobs/search"] button[type="submit"],
+form[action="/jobs"] button[type="submit"] {
   background: #4f46e5;
   color: #fff;
   border: none;
@@ -258,8 +266,8 @@ form[action="/admin/jobs/search"] button[type="submit"]:hover {
 }
 
 /* Add technology / Add company forms */
-form[action="/admin/technology/add"],
-form[action="/admin/company/add"] {
+form[action="/admin/technologies/add"],
+form[action="/admin/companies/add"] {
   display: flex;
   gap: 0.75rem;
   background: #fff;
@@ -269,8 +277,8 @@ form[action="/admin/company/add"] {
   margin-top: 1.5rem;
 }
 
-form[action="/admin/technology/add"] input[type="text"],
-form[action="/admin/company/add"] input[type="text"] {
+form[action="/admin/technologies/add"] input[type="text"],
+form[action="/admin/companies/add"] input[type="text"] {
   flex: 1;
   padding: 0.5rem 0.65rem;
   border: 1px solid #d1d5db;
@@ -278,15 +286,15 @@ form[action="/admin/company/add"] input[type="text"] {
   font-size: 0.95rem;
 }
 
-form[action="/admin/technology/add"] input[type="text"]:focus,
-form[action="/admin/company/add"] input[type="text"]:focus {
+form[action="/admin/technologies/add"] input[type="text"]:focus,
+form[action="/admin/companies/add"] input[type="text"]:focus {
   outline: none;
   border-color: #6366f1;
   box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
 }
 
-form[action="/admin/technology/add"] button[type="submit"],
-form[action="/admin/company/add"] button[type="submit"] {
+form[action="/admin/technologies/add"] button[type="submit"],
+form[action="/admin/companies/add"] button[type="submit"] {
   background: #4f46e5;
   color: #fff;
   border: none;
@@ -298,8 +306,8 @@ form[action="/admin/company/add"] button[type="submit"] {
   transition: background 0.15s ease;
 }
 
-form[action="/admin/technology/add"] button[type="submit"]:hover,
-form[action="/admin/company/add"] button[type="submit"]:hover {
+form[action="/admin/technologies/add"] button[type="submit"]:hover,
+form[action="/admin/companies/add"] button[type="submit"]:hover {
   background: #4338ca;
 }
 
@@ -364,4 +372,59 @@ form[action="/auth/register"] button[type="submit"] {
 form[action="/auth/login"] button[type="submit"]:hover,
 form[action="/auth/register"] button[type="submit"]:hover {
   background: #4338ca;
+}
+
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 2rem;
+  background: #fff;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.navbar-brand a {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #111827;
+  text-decoration: none;
+}
+
+.navbar-links {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.navbar-links a {
+  color: #374151;
+  text-decoration: none;
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
+.navbar-links a:hover {
+  color: #4f46e5;
+}
+
+.navbar-logout-form {
+  margin: 0;
+}
+
+.navbar-logout-btn {
+  background: none;
+  border: none;
+  color: #374151;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 0;
+  font-family: inherit;
+}
+
+.navbar-logout-btn:hover {
+  color: #dc2626;
 }
