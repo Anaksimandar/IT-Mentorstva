@@ -5,10 +5,10 @@ module.exports = {
   showCompanies: async (req, res) => {
     try {
       const companies = await CoreModel.getAll(Company.tableName); // Retrieve all companies from the model
-      res.render("admin/companies", { companies: companies }); // Render the companies view with company data
+      return res.render("admin/companies", { companies: companies }); // Render the companies view with company data
     } catch (err) {
       console.error(err);
-      res.status(500).send("Error retrieving companies");
+      return res.status(500).send("Error retrieving companies");
     }
   },
 
@@ -19,10 +19,10 @@ module.exports = {
     }
     try {
       await Company.addCompany(name);
-      res.redirect("/admin/companies"); // Redirect to the companies page after adding
+      return res.redirect("/admin/companies"); // Redirect to the companies page after adding
     } catch (err) {
       console.error(err);
-      res.status(500).send("Error adding company");
+      return res.status(500).send("Error adding company");
     }
   },
   deleteCompany: async (req, res) => {

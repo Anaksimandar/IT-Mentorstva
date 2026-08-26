@@ -1,6 +1,6 @@
 const express = require("express");
 const app = express();
-const jobRouter = require("./routers/job.router");
+const jobRouter = require("./routers/jobs.router");
 const ejs = require("ejs");
 const session = require("express-session");
 const FileStore = require("session-file-store")(session);
@@ -9,8 +9,8 @@ const authRouter = require("./routers/auth.router");
 const adminJobsRouter = require("./routers/adminJobs.router");
 const path = require("path");
 const expressLayout = require("express-ejs-layouts");
-const companyRouter = require("./routers/company.router");
-const technologyRouter = require("./routers/technology.router");
+const companyRouter = require("./routers/companies.router");
+const technologyRouter = require("./routers/technologies.router");
 const currentUserMiddlewere = require("./middlewares/currentUser.middleware");
 const userJobsRouter = require("./routers/userJobs.router");
 

@@ -9,10 +9,10 @@ module.exports = {
     }
     try {
       await Technology.addTechnology(name);
-      res.redirect("/admin/technologies"); // Redirect to the companies page after adding
+      return res.redirect("/admin/technologies"); // Redirect to the companies page after adding
     } catch (err) {
       console.error(err);
-      res.status(500).send("Error adding company");
+      return res.status(500).send("Error adding company");
     }
   },
   deleteTechnology: async (req, res) => {
@@ -25,20 +25,19 @@ module.exports = {
       if (affectedRows > 0) {
         return res.redirect("/admin/technologies"); // Redirect to the companies page after adding
       }
-      console.error();
       return res.status(500).send("Error removing technology");
     } catch (err) {
       console.error(err);
-      res.status(500).send("Error removing technology");
+      return res.status(500).send("Error removing technology");
     }
   },
   showTechnologies: async (req, res) => {
     try {
       const technologies = await CoreModel.getAll(Technology.tableName); // Retrieve all technologies from the model
-      res.render("admin/technologies", { technologies: technologies }); // Render the technologies view with technology data
+      return res.render("admin/technologies", { technologies: technologies }); // Render the technologies view with technology data
     } catch (err) {
       console.error(err);
-      res.status(500).send("Error retrieving technologies");
+      return res.status(500).send("Error retrieving technologies");
     }
   },
 };

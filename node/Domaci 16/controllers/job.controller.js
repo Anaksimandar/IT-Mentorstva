@@ -26,7 +26,7 @@ module.exports = {
         res.render("job", { job: job[0] });
       } catch (err) {
         console.error(err);
-        res.status(500).send("Error deleting job.");
+        return res.status(500).send("Error deleting job.");
       }
     }
     return res.status(401);
@@ -86,7 +86,7 @@ module.exports = {
         salary,
         due_date,
       );
-      return res.status(201).send("Job created successfully:", jobId);
+      return res.status(201).send(`Job created successfully: + ${jobsId}`);
     } catch (err) {
       return res.status(500).send(err);
     }
@@ -119,23 +119,17 @@ module.exports = {
     const { id } = req.query;
     try {
       const rowsAffected = await Job.delete(id);
-      return res.render("admin/jobs", {
-        users: await CoreModel.getAll(User.tableName),
-        technologies: await CoreModel.getAll(Technology.tableName),
-        companies: await CoreModel.getAll(Company.tableName),
-        jobs: await Job.getAll(),
-      });
-
       if (rowsAffected > 0) {
-        return res.render("admin/jobs");
+        return res.render("admin/jobs", {
+          users: await CoreModel.getAll(User.tableName),
+          technologies: await CoreModel.getAll(Technology.tableName),
+          companies: await CoreModel.getAll(Company.tableName),
+          jobs: await Job.getAll(),
+        });
       }
     } catch (err) {
       console.error(err);
       return res.status(500).send("Error deleting job.");
     }
-  },
-  addJobView: async (req, res) => {
-    const { jobId, userId } = req.body;
-    const result = await Job.recordView(jobId, userId);
   },
 };
